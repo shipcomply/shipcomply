@@ -1,0 +1,33 @@
+{
+  "name": "shipcomply",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Codebase-aware DPDP/GDPR compliance engine",
+  "scripts": {
+    "dev": "turbo dev",
+    "dev:web": "turbo dev --filter=web",
+    "dev:api": "turbo dev --filter=api",
+    "dev:cli": "turbo dev --filter=cli",
+    "build": "turbo build",
+    "test": "turbo test",
+    "lint": "turbo lint",
+    "typecheck": "turbo typecheck",
+    "scan:sample": "pnpm --filter=cli run scan:sample",
+    "scan:monorepo": "pnpm --filter=cli run scan:monorepo",
+    "corpus:build": "python scripts/build-rag-corpus.py",
+    "api-client:gen": "bash scripts/generate-openapi-client.sh",
+    "db:reset": "bash scripts/reset-demo-db.sh",
+    "demo:offline": "OFFLINE=true turbo dev",
+    "e2e": "turbo e2e",
+    "setup": "node scripts/setup.js"
+  },
+  "engines": {
+    "node": ">=20",
+    "pnpm": ">=9"
+  },
+  "packageManager": "pnpm@9.0.0",
+  "devDependencies": {
+    "turbo": "^2.0.0",
+    "typescript": "^5.0.0"
+  }
+}

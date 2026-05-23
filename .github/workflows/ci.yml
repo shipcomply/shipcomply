@@ -1,0 +1,95 @@
+name: CI
+
+on:
+  push:
+    branches: [main, "feat/**", "fix/**"]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: "0 6 * * *"  # daily keep-alive ping for Supabase
+
+env:
+  TURBO_TEAM: ${{ vars.TURBO_TEAM }}
+  TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+
+jobs:
+  ci:
+    name: Lint, Typecheck, Test
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: shipcomply
+          POSTGRES_PASSWORD: shipcomply_test
+          POSTGRES_DB: shipcomply_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install uv
+        run: pip install uv
+
+      - name: Install Node dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Python dependencies
+        run: uv pip install -e ".[dev]"
+        working-directory: services/api
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Test
+        run: pnpm test
+        env:
+          DATABASE_URL: postgresql://shipcomply:shipcomply_test@localhost:5432/shipcomply_test
+          OFFLINE: "true"
+
+      - name: Smoke test (scan:sample)
+        run: pnpm scan:sample
+        env:
+          DATABASE_URL: postgresql://shipcomply:shipcomply_test@localhost:5432/shipcomply_test
+          OFFLINE: "true"
+
+      - name: Check API client drift
+        run: |
+          pnpm api-client:gen
+          git diff --exit-code packages/shared/src/api-client/ || (echo "API client out of sync — run pnpm api-client:gen and commit" && exit 1)
+
+  supabase-keepalive:
+    name: Supabase keep-alive
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule'
+    steps:
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Ping SELECT 1
+        run: python -c "import os, urllib.request, json; req=urllib.request.Request(os.environ['SUPABASE_URL']+'/rest/v1/', headers={'apikey':os.environ['SUPABASE_ANON_KEY']}); urllib.request.urlopen(req); print('Supabase alive')"
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}

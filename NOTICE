@@ -1,0 +1,23 @@
+ShipComply
+Copyright 2026 ShipComply Contributors
+
+This product is licensed under the Apache License, Version 2.0.
+See the LICENSE file for details.
+
+─── Third-Party Attributions ────────────────────────────────────────────────
+
+tree-sitter                  MIT       https://github.com/tree-sitter/tree-sitter
+sentence-transformers        Apache-2  https://github.com/UKPLab/sentence-transformers
+BGE-small-en-v1.5            MIT       https://huggingface.co/BAAI/bge-small-en-v1.5
+FastAPI                      MIT       https://github.com/tiangolo/fastapi
+Next.js                      MIT       https://github.com/vercel/next.js
+shadcn/ui                    MIT       https://github.com/shadcn-ui/ui
+Turborepo                    MIT       https://github.com/vercel/turbo
+WeasyPrint                   BSD       https://github.com/Kozea/WeasyPrint
+pg-boss                      MIT       https://github.com/timgit/pg-boss
+Probot                       MIT       https://github.com/probot/probot
+Ink                          MIT       https://github.com/vadimdemedes/ink
+Alembic                      MIT       https://github.com/sqlalchemy/alembic
+SQLAlchemy                   MIT       https://github.com/sqlalchemy/sqlalchemy
+Zod                          MIT       https://github.com/colinhacks/zod
+Pydantic                     MIT       https://github.com/pydantic/pydantic
