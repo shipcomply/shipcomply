@@ -1,0 +1,11 @@
+﻿{
+  "$schema": "https://shipcomply.dev/schemas/detection-rule.json",
+  "version": "1", "id": "address", "name": "Physical address collection",
+  "jurisdiction": ["DPDP", "GDPR"],
+  "compliance_flags": ["DPDP_S4", "GDPR_A5_1_A"],
+  "patterns": [
+    { "type": "jsx_attribute", "attribute": "name", "value": "address", "element": "input" },
+    { "type": "jsx_attribute", "attribute": "name", "value": "postalCode", "element": "input" },
+    { "type": "identifier", "name_pattern": "address|streetAddress|postalCode|zipCode|city|state" }
+  ]
+}

@@ -1,0 +1,12 @@
+﻿{
+  "$schema": "https://shipcomply.dev/schemas/detection-rule.json",
+  "version": "1", "id": "analytics-sdk", "name": "Analytics SDK PII transmission",
+  "jurisdiction": ["DPDP", "GDPR", "CCPA"],
+  "compliance_flags": ["DPDP_S4", "DPDP_S7", "GDPR_A5_1_A", "GDPR_A28"],
+  "patterns": [
+    { "type": "api_call", "object": "mixpanel", "method": "identify" },
+    { "type": "api_call", "object": "analytics", "method": "identify" },
+    { "type": "api_call", "object": "amplitude", "method": "setUserId" },
+    { "type": "dynamic_import", "package": "mixpanel" }
+  ]
+}

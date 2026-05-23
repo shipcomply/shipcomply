@@ -1,0 +1,12 @@
+﻿{
+  "$schema": "https://shipcomply.dev/schemas/detection-rule.json",
+  "version": "1", "id": "phone", "name": "Phone number collection",
+  "jurisdiction": ["DPDP", "GDPR"],
+  "compliance_flags": ["DPDP_S4", "GDPR_A5_1_A"],
+  "patterns": [
+    { "type": "jsx_attribute", "attribute": "name", "value": "phone", "element": "input" },
+    { "type": "jsx_attribute", "attribute": "name", "value": "phoneNumber", "element": "input" },
+    { "type": "jsx_attribute", "attribute": "type", "value": "tel", "element": "input" },
+    { "type": "identifier", "name_pattern": "phone|phoneNumber|mobile|mobileNumber" }
+  ]
+}
