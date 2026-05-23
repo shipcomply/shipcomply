@@ -1,5 +1,4 @@
 ﻿from pydantic_settings import BaseSettings
-from typing import list as List
 
 
 class Settings(BaseSettings):
@@ -14,6 +13,16 @@ class Settings(BaseSettings):
     sentry_dsn: str = ""
     cors_origins: list[str] = ["http://localhost:3000"]
     offline: bool = False
+
+    # LLM daily request caps — 80% of free tier to leave headroom
+    llm_daily_cap_groq: int = 11_500     # free tier: 14,400
+    llm_daily_cap_gemini: int = 400       # free tier: 500
+    llm_daily_cap_cerebras: int = 400     # free tier: ~500 at 2K tokens/req
+
+    # LLM RPM caps — 80% of free tier
+    llm_rpm_groq: int = 24               # free tier: 30
+    llm_rpm_gemini: int = 8              # free tier: 10
+    llm_rpm_cerebras: int = 24           # free tier: 30
 
     class Config:
         env_file = "../../.env"
