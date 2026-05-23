@@ -1,0 +1,44 @@
+services:
+  # ── FastAPI Backend ────────────────────────────────────────────────────────
+  - type: web
+    name: shipcomply-api
+    runtime: python
+    rootDir: services/api
+    buildCommand: pip install uv && uv pip install -e ".[dev]"
+    startCommand: uvicorn shipcomply_api.main:app --host 0.0.0.0 --port $PORT
+    plan: free
+    envVars:
+      - key: GROQ_API_KEY
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: CEREBRAS_API_KEY
+        sync: false
+      - key: OFFLINE
+        value: "false"
+      - key: DATABASE_URL
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: CORS_ORIGINS
+        value: '["https://shipcomply-web.onrender.com","http://localhost:3000"]'
+
+  # ── Next.js Frontend ───────────────────────────────────────────────────────
+  - type: web
+    name: shipcomply-web
+    runtime: node
+    rootDir: apps/web
+    buildCommand: npm install -g pnpm@9 && pnpm install --frozen-lockfile && pnpm build
+    startCommand: pnpm start
+    plan: free
+    envVars:
+      - key: NEXT_PUBLIC_API_URL
+        value: https://shipcomply-api.onrender.com
+      - key: NEXT_PUBLIC_SUPABASE_URL
+        sync: false
+      - key: NEXT_PUBLIC_SUPABASE_ANON_KEY
+        sync: false
+      - key: NODE_ENV
+        value: production
