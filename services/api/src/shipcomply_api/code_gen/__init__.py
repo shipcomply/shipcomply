@@ -281,3 +281,4 @@ class CodeGenerator:
             written.append(full)
             log.info("wrote %s", full)
         return written
+

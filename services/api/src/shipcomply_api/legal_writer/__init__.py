@@ -339,12 +339,14 @@ def _llm_section(llm, title: str, element_types: list[str], citations: list[str]
         "- Do not include section headers\n"
         "- Return only the section body text"
     )
-    import asyncio
-    try:
-        loop = asyncio.get_event_loop()
-    except RuntimeError:
-        loop = asyncio.new_event_loop()
-    result = loop.run_until_complete(
-        llm.complete(task="SHORT_GEN", system="You are a privacy policy legal writer.", user=prompt)
-    )
-    return result.strip()
+    import asyncio, concurrent.futures
+    # run_until_complete inside a running FastAPI loop raises RuntimeError;
+    # use a thread executor so the coroutine runs in its own loop instead.
+    def _run() -> str:
+        return asyncio.run(
+            llm.complete(task="SHORT_GEN", system="You are a privacy policy legal writer.", user=prompt)
+        )
+    with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
+        future = pool.submit(_run)
+        return future.result(timeout=30).strip()
+

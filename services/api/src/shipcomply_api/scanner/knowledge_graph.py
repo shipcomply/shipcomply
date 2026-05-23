@@ -1,22 +1,22 @@
-﻿"""Knowledge Graph: builds edges from ScanResult (elements -> sources -> sinks -> compliance rules)."""
+﻿"""Knowledge Graph — maps DataElements to sources, sinks, and compliance regulations."""
 from __future__ import annotations
 from dataclasses import dataclass, field
-from shipcomply_api.scanner import ScanResult, DataElement
+from shipcomply_api.scanner import ScanResult
 
 
 @dataclass
 class KGNode:
     id: str
-    type: str          # "data_element" | "file" | "service" | "regulation"
+    type: str       # "data_element" | "file" | "service" | "regulation"
     label: str
     metadata: dict = field(default_factory=dict)
 
 
 @dataclass
 class KGEdge:
-    source: str        # node id
-    target: str        # node id
-    relation: str      # "collected_in" | "sent_to" | "regulated_by"
+    source: str
+    target: str
+    relation: str   # "collected_in" | "sent_to" | "regulated_by"
 
 
 @dataclass
@@ -34,10 +34,19 @@ class KnowledgeGraph:
 def build_graph(scan: ScanResult) -> KnowledgeGraph:
     kg = KnowledgeGraph()
     seen_files: set[str] = set()
+    seen_elements: set[str] = set()   # deduplicate element nodes
+    seen_sinks: set[str] = set()      # deduplicate sink nodes
 
     for el in scan.data_elements:
-        el_id = f"el:{el.name}"
-        kg.nodes.append(KGNode(id=el_id, type="data_element", label=el.name, metadata={"flags": el.compliance_flags}))
+        el_id = f"el:{el.element_type}"
+        if el_id not in seen_elements:
+            kg.nodes.append(KGNode(
+                id=el_id,
+                type="data_element",
+                label=el.element_type,
+                metadata={"field_name": el.field_name, "flags": el.compliance_flags},
+            ))
+            seen_elements.add(el_id)
 
         for src in el.sources:
             file_id = f"file:{src.file}"
@@ -48,7 +57,9 @@ def build_graph(scan: ScanResult) -> KnowledgeGraph:
 
         for sink in el.sinks:
             sink_id = f"sink:{sink.type}:{sink.file}"
-            kg.nodes.append(KGNode(id=sink_id, type="service", label=sink.type, metadata={"file": sink.file}))
+            if sink_id not in seen_sinks:
+                kg.nodes.append(KGNode(id=sink_id, type="service", label=sink.type, metadata={"file": sink.file}))
+                seen_sinks.add(sink_id)
             kg.edges.append(KGEdge(source=el_id, target=sink_id, relation="sent_to"))
 
         for flag in el.compliance_flags:

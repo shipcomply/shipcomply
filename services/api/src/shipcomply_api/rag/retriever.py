@@ -19,14 +19,14 @@ class Chunk:
 
 class RAGRetriever:
     """
-    Hybrid retrieval: BM25 (Postgres tsvector) + cosine similarity (pgvector).
+    Hybrid retrieval: BM25 (tsvector) + cosine similarity (pgvector) with RRF fusion.
     Cross-encoder re-ranks top-20 to top-k.
     Jurisdiction filter applied before retrieval.
     """
 
     def __init__(self, db_url: str | None = None) -> None:
         self._db_url = db_url or os.environ.get("DATABASE_URL", "")
-        self._model = None   # lazy-loaded cross-encoder
+        self._model = None
         self._embed_model = None
 
     def _get_embedding(self, text: str) -> list[float]:
@@ -43,7 +43,8 @@ class RAGRetriever:
             pairs = [(query, c.content[:512]) for c in chunks]
             scores = self._model.predict(pairs)
             for chunk, score in zip(chunks, scores):
-                chunk.score = float(score)
+                # Clamp to [0, 1] — MS-MARCO outputs raw logits (-10 to +10)
+                chunk.score = max(0.0, min(1.0, (float(score) + 10) / 20))
             chunks.sort(key=lambda c: c.score, reverse=True)
         except Exception as e:
             log.warning("Cross-encoder unavailable (%s), using raw scores", e)
@@ -53,44 +54,45 @@ class RAGRetriever:
         if not self._db_url:
             log.warning("DATABASE_URL not set — returning empty chunks")
             return []
+
+        import psycopg2
+        emb = self._get_embedding(query)
+        # Explicit float formatting — avoids numpy repr issues
+        emb_str = "[" + ",".join(f"{x:.6f}" for x in emb) + "]"
+
         try:
-            import psycopg2
-            emb = self._get_embedding(query)
-            conn = psycopg2.connect(self._db_url)
-            cur = conn.cursor()
+            with psycopg2.connect(self._db_url) as conn:
+                with conn.cursor() as cur:
+                    cur.execute("""
+                        WITH bm25 AS (
+                            SELECT chunk_id, jurisdiction, regulation_version, section, content,
+                                   ts_rank(to_tsvector('english', content),
+                                           plainto_tsquery('english', %s)) AS bm25_score
+                            FROM corpus_chunks
+                            WHERE jurisdiction = %s
+                            ORDER BY bm25_score DESC LIMIT 20
+                        ),
+                        vec AS (
+                            SELECT chunk_id, jurisdiction, regulation_version, section, content,
+                                   1 - (embedding <=> %s::vector) AS vec_score
+                            FROM corpus_chunks
+                            WHERE jurisdiction = %s
+                            ORDER BY vec_score DESC LIMIT 20
+                        ),
+                        rrf AS (
+                            SELECT COALESCE(b.chunk_id, v.chunk_id)               AS chunk_id,
+                                   COALESCE(b.jurisdiction, v.jurisdiction)         AS jurisdiction,
+                                   COALESCE(b.regulation_version, v.regulation_version) AS regulation_version,
+                                   COALESCE(b.section, v.section)                  AS section,
+                                   COALESCE(b.content, v.content)                  AS content,
+                                   COALESCE(b.bm25_score, 0) + COALESCE(v.vec_score, 0) AS rrf_score
+                            FROM bm25 b FULL OUTER JOIN vec v USING (chunk_id)
+                        )
+                        SELECT chunk_id, jurisdiction, regulation_version, section, content, rrf_score
+                        FROM rrf ORDER BY rrf_score DESC LIMIT 20
+                    """, (query, jurisdiction, emb_str, jurisdiction))
 
-            # Hybrid: BM25 rank + vector rank (RRF fusion)
-            cur.execute("""
-                WITH bm25 AS (
-                    SELECT chunk_id, jurisdiction, regulation_version, section, content,
-                           ts_rank(to_tsvector('english', content), plainto_tsquery('english', %s)) AS bm25_score
-                    FROM corpus_chunks
-                    WHERE jurisdiction = %s
-                    ORDER BY bm25_score DESC LIMIT 20
-                ),
-                vec AS (
-                    SELECT chunk_id, jurisdiction, regulation_version, section, content,
-                           1 - (embedding <=> %s::vector) AS vec_score
-                    FROM corpus_chunks
-                    WHERE jurisdiction = %s
-                    ORDER BY vec_score DESC LIMIT 20
-                ),
-                rrf AS (
-                    SELECT COALESCE(b.chunk_id, v.chunk_id) AS chunk_id,
-                           COALESCE(b.jurisdiction, v.jurisdiction) AS jurisdiction,
-                           COALESCE(b.regulation_version, v.regulation_version) AS regulation_version,
-                           COALESCE(b.section, v.section) AS section,
-                           COALESCE(b.content, v.content) AS content,
-                           COALESCE(b.bm25_score, 0) + COALESCE(v.vec_score, 0) AS rrf_score
-                    FROM bm25 b FULL OUTER JOIN vec v USING (chunk_id)
-                )
-                SELECT chunk_id, jurisdiction, regulation_version, section, content, rrf_score
-                FROM rrf ORDER BY rrf_score DESC LIMIT 20
-            """, (query, jurisdiction, str(emb), jurisdiction))
-
-            rows = cur.fetchall()
-            cur.close()
-            conn.close()
+                    rows = cur.fetchall()
 
             chunks = [
                 Chunk(chunk_id=r[0], jurisdiction=r[1], regulation_version=r[2],
