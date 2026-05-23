@@ -18,6 +18,7 @@
     "rag:query": "python scripts/rag_query.py",
     "gen:policy": "python scripts/gen_policy.py",
     "gen:code": "python scripts/gen_code.py",
+    "gen:audit": "python scripts/gen_audit.py",
     "api-client:gen": "bash scripts/generate-openapi-client.sh",
     "db:reset": "bash scripts/reset-demo-db.sh",
     "demo:offline": "OFFLINE=true turbo dev",
