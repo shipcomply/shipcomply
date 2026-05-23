@@ -46,7 +46,8 @@ async def stream_scan(scan_id: str):
 
 @router.post("/scans/local")
 async def scan_local(body: dict):
-    """Scan a local path and return the knowledge graph."""
+    """Scan a local path and return element counts + knowledge graph."""
+    from shipcomply_api.scanner import scan_repo
     repo_path = body.get("path", ".")
     result = scan_repo(repo_path)
     graph = build_graph(result)
@@ -58,26 +59,6 @@ async def scan_local(body: dict):
         },
         "graph": graph.to_dict(),
     }
-
-
-@router.get("/scans/{scan_id}/graph")
-async def get_scan_graph(scan_id: str):
-    """Return knowledge graph for a scan. Stub returns a demo graph."""
-    from shipcomply_api.scanner import ScanResult, DataElement, ElementSource
-    demo = ScanResult(
-        data_elements=[
-            DataElement(
-                element_type="email",
-                field_name="email",
-                compliance_flags=["DPDP_S4", "DPDP_S7", "GDPR_A5_1_A"],
-                sources=[ElementSource(file="app/page.tsx", line=12, pattern="jsx_input")],
-            )
-        ],
-        files_scanned=5,
-        scan_id=scan_id,
-    )
-    graph = build_graph(demo)
-    return graph.to_dict()
 
 
 @router.post("/scans/local/policy")
@@ -100,11 +81,10 @@ async def generate_local_policy(body: dict):
     }
 
 
-@router.get("/scans/{scan_id}/policy")
-async def get_scan_policy(scan_id: str, jurisdiction: str = "DPDP"):
-    """Return generated privacy policy for a scan. Stub uses demo scan data."""
+@router.get("/scans/{scan_id}/graph")
+async def get_scan_graph(scan_id: str):
+    """Return knowledge graph for a scan (stub with demo data)."""
     from shipcomply_api.scanner import ScanResult, DataElement, ElementSource
-    from shipcomply_api.legal_writer import PolicyGenerator
     demo = ScanResult(
         data_elements=[
             DataElement(
@@ -112,19 +92,31 @@ async def get_scan_policy(scan_id: str, jurisdiction: str = "DPDP"):
                 field_name="email",
                 compliance_flags=["DPDP_S4", "DPDP_S7", "GDPR_A5_1_A"],
                 sources=[ElementSource(file="app/page.tsx", line=12, pattern="jsx_input")],
-            ),
-            DataElement(
-                element_type="phone",
-                field_name="phone",
-                compliance_flags=["DPDP_S4", "GDPR_A5_1_A"],
-                sources=[ElementSource(file="app/page.tsx", line=15, pattern="jsx_input")],
-            ),
-            DataElement(
-                element_type="name",
-                field_name="firstName",
-                compliance_flags=["DPDP_S4", "GDPR_A5_1_A"],
-                sources=[ElementSource(file="app/page.tsx", line=9, pattern="jsx_input")],
-            ),
+            )
+        ],
+        files_scanned=5,
+        scan_id=scan_id,
+    )
+    graph = build_graph(demo)
+    return graph.to_dict()
+
+
+@router.get("/scans/{scan_id}/policy")
+async def get_scan_policy(scan_id: str, jurisdiction: str = "DPDP"):
+    """Return generated privacy policy for a scan (stub with demo data)."""
+    from shipcomply_api.scanner import ScanResult, DataElement, ElementSource
+    from shipcomply_api.legal_writer import PolicyGenerator
+    demo = ScanResult(
+        data_elements=[
+            DataElement(element_type="email", field_name="email",
+                        compliance_flags=["DPDP_S4", "DPDP_S7", "GDPR_A5_1_A"],
+                        sources=[ElementSource(file="app/page.tsx", line=12, pattern="jsx_input")]),
+            DataElement(element_type="phone", field_name="phone",
+                        compliance_flags=["DPDP_S4", "GDPR_A5_1_A"],
+                        sources=[ElementSource(file="app/page.tsx", line=15, pattern="jsx_input")]),
+            DataElement(element_type="name", field_name="firstName",
+                        compliance_flags=["DPDP_S4", "GDPR_A5_1_A"],
+                        sources=[ElementSource(file="app/page.tsx", line=9, pattern="jsx_input")]),
         ],
         files_scanned=5,
         scan_id=scan_id,
@@ -132,3 +124,25 @@ async def get_scan_policy(scan_id: str, jurisdiction: str = "DPDP"):
     generator = PolicyGenerator()
     policy = generator.generate(demo, jurisdiction=jurisdiction)
     return policy.to_dict()
+
+
+@router.get("/scans/{scan_id}/audit")
+async def get_scan_audit(scan_id: str):
+    """Return compliance audit for a scan (stub with demo data)."""
+    from shipcomply_api.scanner import ScanResult, DataElement, ElementSource
+    from shipcomply_api.audit import AuditAgent
+    demo = ScanResult(
+        data_elements=[
+            DataElement(element_type="email", field_name="email",
+                        compliance_flags=["DPDP_S4", "GDPR_A5_1_A"],
+                        sources=[ElementSource(file="app/page.tsx", line=12, pattern="jsx_input")]),
+            DataElement(element_type="phone", field_name="phone",
+                        compliance_flags=["DPDP_S4"],
+                        sources=[ElementSource(file="app/page.tsx", line=15, pattern="jsx_input")]),
+        ],
+        files_scanned=5,
+        scan_id=scan_id,
+    )
+    agent = AuditAgent()
+    report = agent.audit(demo)
+    return report.to_dict()
