@@ -29,8 +29,8 @@ services:
   - type: web
     name: shipcomply-web
     runtime: node
-    buildCommand: corepack enable && pnpm install --frozen-lockfile && cd apps/web && pnpm build
-    startCommand: cd apps/web && pnpm start
+    buildCommand: npx pnpm@9 install --frozen-lockfile && cd apps/web && npx pnpm@9 build
+    startCommand: cd apps/web && npx pnpm@9 start
     plan: free
     envVars:
       - key: NEXT_PUBLIC_API_URL
