@@ -3,6 +3,8 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 import json
 import asyncio
+from shipcomply_api.scanner import scan_repo
+from shipcomply_api.scanner.knowledge_graph import build_graph
 
 router = APIRouter()
 
@@ -42,3 +44,40 @@ async def stream_scan(scan_id: str):
         yield f"data: {json.dumps({'done': True})}\n\n"
 
     return StreamingResponse(event_generator(), media_type="text/event-stream")
+
+
+@router.post("/scans/local")
+async def scan_local(body: dict):
+    """Scan a local path and return the knowledge graph."""
+    repo_path = body.get("path", ".")
+    result = scan_repo(repo_path)
+    graph = build_graph(result)
+    return {
+        "scan": {
+            "total_elements": len(result.data_elements),
+            "total_sources": sum(len(e.sources) for e in result.data_elements),
+            "files_scanned": result.files_scanned,
+        },
+        "graph": graph.to_dict(),
+    }
+
+
+@router.get("/scans/{scan_id}/graph")
+async def get_scan_graph(scan_id: str):
+    """Return the knowledge graph for a completed scan. Stub returns a demo graph."""
+    # TODO: fetch from DB once scan persistence is wired
+    from shipcomply_api.scanner import ScanResult, DataElement, ElementSource
+    demo = ScanResult(
+        data_elements=[
+            DataElement(
+                element_type="email",
+                field_name="email",
+                compliance_flags=["DPDP_S4", "DPDP_S7", "GDPR_A5_1_A"],
+                sources=[ElementSource(file="app/page.tsx", line=12, pattern="jsx_input")],
+            )
+        ],
+        files_scanned=5,
+        scan_id=scan_id,
+    )
+    graph = build_graph(demo)
+    return graph.to_dict()

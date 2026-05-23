@@ -1,4 +1,4 @@
-{
+﻿{
   "name": "shipcomply",
   "private": true,
   "version": "0.0.0",
@@ -15,6 +15,7 @@
     "scan:sample": "pnpm --filter=cli run scan:sample",
     "scan:monorepo": "pnpm --filter=cli run scan:monorepo",
     "corpus:build": "python scripts/build-rag-corpus.py",
+    "rag:query": "python scripts/rag_query.py",
     "api-client:gen": "bash scripts/generate-openapi-client.sh",
     "db:reset": "bash scripts/reset-demo-db.sh",
     "demo:offline": "OFFLINE=true turbo dev",
