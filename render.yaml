@@ -29,9 +29,8 @@ services:
   - type: web
     name: shipcomply-web
     runtime: node
-    rootDir: apps/web
-    buildCommand: npm install -g pnpm@9 && pnpm install --frozen-lockfile && pnpm build
-    startCommand: pnpm start
+    buildCommand: npm install -g pnpm@9 && pnpm install --frozen-lockfile && cd apps/web && pnpm build
+    startCommand: cd apps/web && pnpm start
     plan: free
     envVars:
       - key: NEXT_PUBLIC_API_URL
