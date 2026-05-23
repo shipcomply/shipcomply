@@ -1,0 +1,19 @@
+﻿id: shipcomply-app
+name: ShipComply
+description: "Automated DPDP/GDPR compliance scanning for pull requests"
+url: https://shipcomply.dev
+webhook_url: https://shipcomply.dev/api/github/webhook
+webhook_secret:
+  required: true
+  description: Webhook secret for verifying GitHub payloads
+
+permissions:
+  checks: write
+  contents: read
+  pull_requests: write
+  statuses: write
+
+events:
+  - pull_request
+  - push
+  - installation

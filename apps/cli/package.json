@@ -1,0 +1,40 @@
+﻿{
+  "name": "@shipcomply/cli",
+  "version": "0.0.0",
+  "description": "ShipComply CLI — scan repos for DPDP/GDPR compliance",
+  "bin": {
+    "shipcomply": "./bin/shipcomply.js"
+  },
+  "scripts": {
+    "dev": "tsup src/index.ts --watch",
+    "build": "tsup src/index.ts",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src/",
+    "scan:sample": "node bin/shipcomply.js scan ../../examples/sample-nextjs-app --offline",
+    "scan:monorepo": "node bin/shipcomply.js scan ../../examples/sample-nextjs-monorepo --offline"
+  },
+  "dependencies": {
+    "commander": "^12.0.0",
+    "ink": "^5.0.0",
+    "ink-spinner": "^5.0.0",
+    "react": "^19.0.0",
+    "zod": "^3.0.0",
+    "chalk": "^5.0.0",
+    "ora": "^8.0.0",
+    "eventsource": "^3.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.0.0",
+    "eslint": "^9.0.0"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "type": "module",
+  "exports": {
+    ".": "./dist/index.js"
+  },
+  "files": ["dist", "bin"]
+}

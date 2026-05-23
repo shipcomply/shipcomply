@@ -1,0 +1,15 @@
+﻿{
+  "$schema": "https://shipcomply.dev/schemas/detection-rule.json",
+  "version": "1",
+  "id": "email",
+  "name": "Email address collection",
+  "description": "Detects HTML input fields and form attributes collecting email addresses",
+  "jurisdiction": ["DPDP", "GDPR"],
+  "compliance_flags": ["DPDP_S4", "GDPR_A5_1_A", "GDPR_A13"],
+  "patterns": [
+    { "type": "jsx_attribute", "attribute": "name", "value": "email", "element": "input" },
+    { "type": "jsx_attribute", "attribute": "name", "value": "emailAddress", "element": "input" },
+    { "type": "jsx_attribute", "attribute": "type", "value": "email", "element": "input" },
+    { "type": "identifier", "name_pattern": "email|emailAddress|userEmail" }
+  ]
+}

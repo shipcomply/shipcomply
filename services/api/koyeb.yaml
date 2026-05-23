@@ -1,0 +1,24 @@
+﻿name: shipcomply-api
+type: web
+git:
+  url: https://github.com/shipcomply/shipcomply
+  branch: main
+  workdir: services/api
+build:
+  dockerfile: Dockerfile
+run:
+  command: uvicorn shipcomply_api.main:app --host 0.0.0.0 --port 8000
+  port: 8000
+env:
+  - key: SUPABASE_URL
+    value: "{{SUPABASE_URL}}"
+  - key: SUPABASE_SERVICE_ROLE_KEY
+    value: "{{SUPABASE_SERVICE_ROLE_KEY}}"
+  - key: GROQ_API_KEY
+    value: "{{GROQ_API_KEY}}"
+  - key: GEMINI_API_KEY
+    value: "{{GEMINI_API_KEY}}"
+  - key: CEREBRAS_API_KEY
+    value: "{{CEREBRAS_API_KEY}}"
+  - key: SENTRY_DSN
+    value: "{{SENTRY_DSN}}"
