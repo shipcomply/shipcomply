@@ -29,7 +29,7 @@ services:
   - type: web
     name: shipcomply-web
     runtime: node
-    buildCommand: npm install -g pnpm@9 && pnpm install --frozen-lockfile && cd apps/web && pnpm build
+    buildCommand: corepack enable && pnpm install --frozen-lockfile && cd apps/web && pnpm build
     startCommand: cd apps/web && pnpm start
     plan: free
     envVars:

@@ -1,4 +1,4 @@
-﻿[project]
+[project]
 name = "shipcomply-api"
 version = "0.0.0"
 description = "ShipComply FastAPI backend"
