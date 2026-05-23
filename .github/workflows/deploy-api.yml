@@ -1,11 +1,7 @@
 name: Deploy API to Koyeb
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - "services/api/**"
-      - ".github/workflows/deploy-api.yml"
+  workflow_dispatch:  # manual only until KOYEB_API_TOKEN secret is configured
 
 jobs:
   deploy:

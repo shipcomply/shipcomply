@@ -20,7 +20,6 @@ dependencies = [
     "sentence-transformers>=3.0.0",
     "tree-sitter>=0.22.0",
     "weasyprint>=62.0",
-    "pg-boss>=1.0.0",
     "python-dotenv>=1.0.0",
     "python-jose[cryptography]>=3.3.0",
     "sentry-sdk[fastapi]>=2.0.0",
