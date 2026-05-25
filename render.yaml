@@ -31,8 +31,8 @@ services:
   - type: web
     name: shipcomply-web
     runtime: node
-    buildCommand: cd apps/web && npx pnpm@9 install --no-frozen-lockfile && npx pnpm@9 build
-    startCommand: cd apps/web && npx pnpm@9 start
+    buildCommand: cd apps/web && npm install && npm run build
+    startCommand: cd apps/web && npm start
     plan: free
     envVars:
       - key: NEXT_PUBLIC_API_URL
