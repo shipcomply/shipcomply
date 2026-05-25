@@ -31,7 +31,7 @@ services:
   - type: web
     name: shipcomply-web
     runtime: node
-    buildCommand: npx pnpm@9 install --no-frozen-lockfile && cd apps/web && npx pnpm@9 build
+    buildCommand: cd apps/web && npx pnpm@9 install --no-frozen-lockfile && npx pnpm@9 build
     startCommand: cd apps/web && npx pnpm@9 start
     plan: free
     envVars:
