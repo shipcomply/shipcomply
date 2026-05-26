@@ -1,5 +1,5 @@
 ﻿import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 from sqlalchemy import String, Text, Integer, Float, Boolean, DateTime, ForeignKey, JSON, Index
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -11,7 +11,7 @@ def _uuid() -> str:
 
 
 def _now() -> datetime:
-    return datetime.utcnow()
+    return datetime.now(timezone.utc)
 
 
 class Org(Base):
@@ -25,8 +25,8 @@ class Org(Base):
     stripe_customer_id: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
     stripe_subscription_id: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
     scans_used_today: Mapped[int] = mapped_column(Integer, default=0)
-    scans_reset_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
+    scans_reset_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
 
     scans: Mapped[list["Scan"]] = relationship("Scan", back_populates="org")
 
@@ -37,9 +37,9 @@ class User(Base):
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
     clerk_user_id: Mapped[str] = mapped_column(String(64), unique=True, index=True)
     org_id: Mapped[str] = mapped_column(String(36), ForeignKey("orgs.id"), index=True)
-    email: Mapped[str] = mapped_column(String(255), index=True)
+    email: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
     role: Mapped[str] = mapped_column(String(32), default="member")
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
 
 
 class Scan(Base):
@@ -61,12 +61,13 @@ class Scan(Base):
     audit_r2_key: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     pdf_r2_key: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     kg_r2_key: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-    started_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
-    completed_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
+    started_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    completed_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
 
     org: Mapped["Org"] = relationship("Org", back_populates="scans")
     data_elements: Mapped[list["DataElement"]] = relationship("DataElement", back_populates="scan")
+    findings: Mapped[list["Finding"]] = relationship("Finding", back_populates="scan")
     agent_runs: Mapped[list["AgentRun"]] = relationship("AgentRun", back_populates="scan")
 
     __table_args__ = (Index("ix_scans_org_created", "org_id", "created_at"),)
@@ -98,7 +99,9 @@ class Finding(Base):
     file_path: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     line_number: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     regulation: Mapped[Optional[str]] = mapped_column(String(16), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
 
+    scan: Mapped["Scan"] = relationship("Scan", back_populates="findings")
     data_element: Mapped[Optional["DataElement"]] = relationship("DataElement", back_populates="findings")
 
 
@@ -116,8 +119,8 @@ class AgentRun(Base):
     cache_hit: Mapped[bool] = mapped_column(Boolean, default=False)
     latency_ms: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     error: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-    started_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
-    ended_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+    ended_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
 
     scan: Mapped["Scan"] = relationship("Scan", back_populates="agent_runs")
 
@@ -133,8 +136,8 @@ class LLMCache(Base):
     response_text: Mapped[str] = mapped_column(Text)
     tokens_in: Mapped[int] = mapped_column(Integer, default=0)
     tokens_out: Mapped[int] = mapped_column(Integer, default=0)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
-    expires_at: Mapped[datetime] = mapped_column(DateTime)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
 
     __table_args__ = (Index("ix_llm_cache_expires", "expires_at"),)
 
@@ -150,14 +153,12 @@ class KGNode(Base):
     body: Mapped[str] = mapped_column(Text)
     source_url: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     kg_version: Mapped[str] = mapped_column(String(16), default="1.0.0")
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
 
     out_edges: Mapped[list["KGEdge"]] = relationship("KGEdge", foreign_keys="KGEdge.from_id", back_populates="from_node")
     in_edges: Mapped[list["KGEdge"]] = relationship("KGEdge", foreign_keys="KGEdge.to_id", back_populates="to_node")
 
-    __table_args__ = (
-        Index("ix_kg_nodes_jurisdiction_type", "jurisdiction", "node_type"),
-    )
+    __table_args__ = (Index("ix_kg_nodes_jurisdiction_type", "jurisdiction", "node_type"),)
 
 
 class KGEdge(Base):
@@ -186,7 +187,7 @@ class AuditLog(Base):
     resource_id: Mapped[Optional[str]] = mapped_column(String(36), nullable=True)
     ip_address: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
     request_id: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
-    metadata: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
+    extra_metadata: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
 
     __table_args__ = (Index("ix_audit_log_org_created", "org_id", "created_at"),)

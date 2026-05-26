@@ -3,11 +3,12 @@ import hashlib
 import json
 import logging
 import os
-from datetime import datetime
+import re
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request, status
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, field_validator
 from sqlalchemy import select, update
@@ -16,16 +17,15 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from shipcomply_api.auth.deps import CurrentUser, get_current_user
 from shipcomply_api.db.session import get_db
 from shipcomply_api.db.models import Scan, DataElement as DataElementRow, Finding as FindingRow, Org
-from shipcomply_api.middleware.rate_limit import check_org_daily_quota
+from shipcomply_api.middleware.rate_limit import check_anon_ip_rate, check_org_daily_quota
 from shipcomply_api.storage.r2 import r2_client
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
-_SCAN_ROOTS = [
-    Path(os.environ.get("SCAN_ROOT", "/tmp/shipcomply-scans")).resolve(),
-    Path("examples").resolve(),
-]
+# Only examples/ is the allowed local scan root — no env override for security
+_EXAMPLES_ROOT = Path("examples").resolve()
+_BRANCH_RE = re.compile(r"^[A-Za-z0-9_./\-]+$")
 
 
 def _validate_local_path(raw: str) -> Path:
@@ -33,9 +33,26 @@ def _validate_local_path(raw: str) -> Path:
         p = Path(raw).resolve(strict=False)
     except Exception:
         raise HTTPException(status_code=400, detail="Invalid path")
-    if not any(str(p).startswith(str(root)) for root in _SCAN_ROOTS):
-        raise HTTPException(status_code=403, detail="Path not in allowed scan roots")
+    # Use is_relative_to (Python 3.9+) — startswith is broken for path containment
+    try:
+        p.relative_to(_EXAMPLES_ROOT)
+    except ValueError:
+        raise HTTPException(status_code=403, detail="Path must be within examples/ directory")
     return p
+
+
+def _resolve_org_id(user: CurrentUser):
+    """Return a DB filter for scans belonging to the authenticated user's org."""
+    # Used as a coroutine-free helper; org lookup happens in each handler
+    return user.org_id  # clerk_org_id — used in join below
+
+
+async def _get_user_org(user: CurrentUser, db: AsyncSession) -> Org:
+    result = await db.execute(select(Org).where(Org.clerk_org_id == user.org_id))
+    org = result.scalar_one_or_none()
+    if not org:
+        raise HTTPException(status_code=404, detail="Org not found — complete onboarding first")
+    return org
 
 
 class ScanRequest(BaseModel):
@@ -47,10 +64,18 @@ class ScanRequest(BaseModel):
     @field_validator("repo_url")
     @classmethod
     def validate_repo_url(cls, v: str) -> str:
-        import re
-        allowed = re.compile(r"^https://(github\.com|gitlab\.com|bitbucket\.org)/[A-Za-z0-9_.\-]+/[A-Za-z0-9_.\-]+(\.git)?$")
+        allowed = re.compile(
+            r"^https://(github\.com|gitlab\.com|bitbucket\.org)/[A-Za-z0-9_.\-]+/[A-Za-z0-9_.\-]+(\.git)?$"
+        )
         if not allowed.match(v.rstrip("/")):
             raise ValueError("repo_url must be a public HTTPS GitHub/GitLab/Bitbucket URL")
+        return v
+
+    @field_validator("branch")
+    @classmethod
+    def validate_branch(cls, v: str) -> str:
+        if not _BRANCH_RE.match(v) or v.startswith("-"):
+            raise ValueError("branch contains invalid characters")
         return v
 
 
@@ -60,8 +85,8 @@ class ScanResponse(BaseModel):
     message: str
 
 
-async def _run_scan_pipeline(scan_id: str, repo_url: str, branch: str, jurisdiction: str, db_url: str) -> None:
-    """Full scan pipeline executed as background task."""
+async def _run_scan_pipeline(scan_id: str, repo_url: str, branch: str, jurisdiction: str) -> None:
+    """Full scan pipeline as background task."""
     from shipcomply_api.db.session import AsyncSessionLocal
     from shipcomply_api.scanner import scan_repo
     from shipcomply_api.scanner.knowledge_graph import build_graph
@@ -76,10 +101,11 @@ async def _run_scan_pipeline(scan_id: str, repo_url: str, branch: str, jurisdict
 
         try:
             await _update_status("cloning")
-            import tempfile, subprocess  # noqa: E401
+            import tempfile
+            import subprocess
             with tempfile.TemporaryDirectory(prefix="shipcomply-") as tmp:
                 result = subprocess.run(
-                    ["git", "clone", "--depth=1", "--branch", branch, repo_url, tmp],
+                    ["git", "clone", "--depth=1", "--branch", branch, "--", repo_url, tmp],
                     capture_output=True, text=True, timeout=120,
                 )
                 if result.returncode != 0:
@@ -89,7 +115,7 @@ async def _run_scan_pipeline(scan_id: str, repo_url: str, branch: str, jurisdict
                 scan_result = scan_repo(tmp)
                 commit_sha = subprocess.run(
                     ["git", "-C", tmp, "rev-parse", "HEAD"],
-                    capture_output=True, text=True
+                    capture_output=True, text=True,
                 ).stdout.strip()
 
                 await _update_status("building_kg")
@@ -120,6 +146,18 @@ async def _run_scan_pipeline(scan_id: str, repo_url: str, branch: str, jurisdict
                         sources=[{"file": s.file, "line": s.line, "pattern": s.pattern} for s in el.sources],
                     ))
 
+                # Persist Finding rows (M5)
+                for finding in getattr(audit_report, "findings", []):
+                    db.add(FindingRow(
+                        scan_id=scan_id,
+                        severity=getattr(finding, "severity", "INFO"),
+                        title=getattr(finding, "title", "")[:512],
+                        detail=getattr(finding, "detail", "") or "",
+                        file_path=getattr(finding, "file_path", None),
+                        line_number=getattr(finding, "line_number", None),
+                        regulation=getattr(finding, "regulation", None),
+                    ))
+
                 await db.execute(
                     update(Scan).where(Scan.id == scan_id).values(
                         status="completed",
@@ -129,7 +167,7 @@ async def _run_scan_pipeline(scan_id: str, repo_url: str, branch: str, jurisdict
                         policy_r2_key=policy_key,
                         audit_r2_key=audit_key,
                         kg_r2_key=kg_key,
-                        completed_at=datetime.utcnow(),
+                        completed_at=datetime.now(timezone.utc),
                     )
                 )
                 await db.commit()
@@ -148,19 +186,18 @@ async def create_scan(
     user: CurrentUser = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    org_result = await db.execute(select(Org).where(Org.clerk_org_id == user.org_id))
-    org = org_result.scalar_one_or_none()
-    if not org:
-        raise HTTPException(status_code=404, detail="Org not found — complete onboarding first")
+    org = await _get_user_org(user, db)
+    await check_org_daily_quota(org, db)
 
-    await check_org_daily_quota(org.id, org.plan)
-
-    idempotency_key = hashlib.sha256(f"{req.repo_url}:{req.branch}:{req.jurisdiction}:{user.org_id}".encode()).hexdigest()
-    existing = await db.execute(select(Scan).where(Scan.idempotency_key == idempotency_key, Scan.status.notin_(["failed"])))
+    idempotency_key = hashlib.sha256(
+        f"{req.repo_url}:{req.branch}:{req.jurisdiction}:{user.org_id}".encode()
+    ).hexdigest()
+    existing = await db.execute(
+        select(Scan).where(Scan.idempotency_key == idempotency_key, Scan.status.notin_(["failed"]))
+    )
     if scan := existing.scalar_one_or_none():
         return ScanResponse(scan_id=scan.id, status=scan.status, message="Returning existing in-flight scan")
 
-    from shipcomply_api.config import settings
     scan = Scan(
         org_id=org.id,
         repo_url=req.repo_url,
@@ -168,13 +205,13 @@ async def create_scan(
         jurisdiction=req.jurisdiction,
         status="queued",
         idempotency_key=idempotency_key,
-        started_at=datetime.utcnow(),
+        started_at=datetime.now(timezone.utc),
     )
     db.add(scan)
     await db.commit()
     await db.refresh(scan)
 
-    background_tasks.add_task(_run_scan_pipeline, scan.id, req.repo_url, req.branch, req.jurisdiction, settings.database_url)
+    background_tasks.add_task(_run_scan_pipeline, scan.id, req.repo_url, req.branch, req.jurisdiction)
     return ScanResponse(scan_id=scan.id, status="queued", message="Scan enqueued")
 
 
@@ -184,7 +221,8 @@ async def get_scan(
     user: CurrentUser = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    result = await db.execute(select(Scan).where(Scan.id == scan_id))
+    org = await _get_user_org(user, db)
+    result = await db.execute(select(Scan).where(Scan.id == scan_id, Scan.org_id == org.id))
     scan = result.scalar_one_or_none()
     if not scan:
         raise HTTPException(status_code=404, detail="Scan not found")
@@ -202,18 +240,29 @@ async def get_scan(
 
 
 @router.get("/scans/{scan_id}/stream")
-async def stream_scan(scan_id: str, user: CurrentUser = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+async def stream_scan(
+    scan_id: str,
+    request: Request,
+    user: CurrentUser = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    org = await _get_user_org(user, db)
+
     async def event_generator():
         terminal = {"completed", "failed"}
-        for _ in range(60):
+        for _ in range(120):  # 6 min max (120 × 3s)
+            if await request.is_disconnected():
+                break
             await asyncio.sleep(3)
-            result = await db.execute(select(Scan).where(Scan.id == scan_id))
+            async with db.begin_nested():
+                result = await db.execute(
+                    select(Scan).where(Scan.id == scan_id, Scan.org_id == org.id)
+                )
             scan = result.scalar_one_or_none()
             if not scan:
                 yield f"data: {json.dumps({'error': 'scan not found'})}\n\n"
                 return
-            payload = {"scan_id": scan_id, "status": scan.status}
-            yield f"data: {json.dumps(payload)}\n\n"
+            yield f"data: {json.dumps({'scan_id': scan_id, 'status': scan.status})}\n\n"
             if scan.status in terminal:
                 break
         yield f"data: {json.dumps({'done': True})}\n\n"
@@ -227,48 +276,62 @@ async def get_scan_audit(
     user: CurrentUser = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    result = await db.execute(select(Scan).where(Scan.id == scan_id))
+    org = await _get_user_org(user, db)
+    result = await db.execute(select(Scan).where(Scan.id == scan_id, Scan.org_id == org.id))
     scan = result.scalar_one_or_none()
     if not scan:
         raise HTTPException(status_code=404, detail="Scan not found")
     if scan.status != "completed":
         return {"scan_id": scan_id, "status": scan.status, "message": "Scan not yet complete"}
+
+    # Try persisted Finding rows first
+    findings_result = await db.execute(
+        select(FindingRow).where(FindingRow.scan_id == scan_id)
+    )
+    findings = findings_result.scalars().all()
+    if findings:
+        return {
+            "scan_id": scan_id,
+            "status": "completed",
+            "score": scan.compliance_score or 0,
+            "total_elements": scan.files_scanned,
+            "findings": [
+                {
+                    "severity": f.severity,
+                    "title": f.title,
+                    "detail": f.detail,
+                    "file_path": f.file_path,
+                    "line_number": f.line_number,
+                }
+                for f in findings
+            ],
+        }
+
+    # Fallback: R2 markdown
     if scan.audit_r2_key:
         try:
             content = await r2_client.get(scan.audit_r2_key)
-            return {"scan_id": scan_id, "status": "completed", "audit_markdown": content.decode()}
+            return {
+                "scan_id": scan_id,
+                "status": "completed",
+                "score": scan.compliance_score or 0,
+                "audit_markdown": content.decode(),
+                "findings": [],
+            }
         except Exception:
             pass
-    from shipcomply_api.audit import AuditAgent
-    from shipcomply_api.scanner import ScanResult, DataElement as ScanDE, ElementSource
-    elements_result = await db.execute(select(DataElementRow).where(DataElementRow.scan_id == scan_id))
-    elements = elements_result.scalars().all()
-    scan_result = ScanResult(
-        repo_path=scan.repo_path or scan.repo_url or "",
-        scan_id=scan.id,
-        data_elements=[
-            ScanDE(
-                element_type=el.element_type,
-                field_name=el.field_name,
-                compliance_flags=el.compliance_flags,
-                sources=[ElementSource(**s) for s in (el.sources or [])],
-            )
-            for el in elements
-        ],
-        files_scanned=scan.files_scanned,
-    )
-    report = AuditAgent().audit(scan_result)
-    return report.to_dict()
+
+    return {"scan_id": scan_id, "status": scan.status, "message": "Audit not yet available"}
 
 
 @router.get("/scans/{scan_id}/policy")
 async def get_scan_policy(
     scan_id: str,
-    jurisdiction: str = "DPDP",
     user: CurrentUser = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    result = await db.execute(select(Scan).where(Scan.id == scan_id))
+    org = await _get_user_org(user, db)
+    result = await db.execute(select(Scan).where(Scan.id == scan_id, Scan.org_id == org.id))
     scan = result.scalar_one_or_none()
     if not scan:
         raise HTTPException(status_code=404, detail="Scan not found")
@@ -287,7 +350,8 @@ async def get_scan_graph(
     user: CurrentUser = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    result = await db.execute(select(Scan).where(Scan.id == scan_id))
+    org = await _get_user_org(user, db)
+    result = await db.execute(select(Scan).where(Scan.id == scan_id, Scan.org_id == org.id))
     scan = result.scalar_one_or_none()
     if not scan:
         raise HTTPException(status_code=404, detail="Scan not found")
@@ -301,10 +365,11 @@ async def get_scan_graph(
 
 
 @router.post("/scans/local")
-async def scan_local(body: dict):
-    """Public local-path scan endpoint (demo / smoke-test — no auth required)."""
+async def scan_local(request: Request, body: dict):
+    """Local scan restricted to examples/ only — rate-limited by IP."""
     from shipcomply_api.scanner import scan_repo
     from shipcomply_api.scanner.knowledge_graph import build_graph
+    await check_anon_ip_rate(request)
     safe_path = _validate_local_path(body.get("path", "examples/sample-nextjs-app"))
     result = scan_repo(str(safe_path))
     graph = build_graph(result)
@@ -320,11 +385,12 @@ async def scan_local(body: dict):
 
 
 @router.post("/scans/local/policy")
-async def generate_local_policy(body: dict):
-    """Public local-path policy generation (demo — no auth required)."""
+async def generate_local_policy(request: Request, body: dict):
+    """Local policy generation restricted to examples/ — rate-limited by IP."""
     from shipcomply_api.scanner import scan_repo
     from shipcomply_api.legal_writer import PolicyGenerator
     from shipcomply_api.llm import llm_client
+    await check_anon_ip_rate(request)
     safe_path = _validate_local_path(body.get("path", "examples/sample-nextjs-app"))
     jurisdiction = body.get("jurisdiction", "DPDP")
     result = scan_repo(str(safe_path))
