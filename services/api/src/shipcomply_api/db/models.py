@@ -61,6 +61,7 @@ class Scan(Base):
     audit_r2_key: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     pdf_r2_key: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     kg_r2_key: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    code_r2_key: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     started_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     completed_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)

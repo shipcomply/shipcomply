@@ -31,6 +31,8 @@ class Settings(BaseSettings):
     cf_api_token: str = ""
     cf_r2_bucket: str = "shipcomply-artifacts"
     cf_r2_endpoint: str = ""
+    cf_r2_access_key_id: str = ""
+    cf_r2_secret_access_key: str = ""
     cf_kv_namespace_id: str = ""
     cf_queue_name: str = "scan-jobs"
     cf_browser_rendering_url: str = ""

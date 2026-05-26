@@ -5,7 +5,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
 
-from shipcomply_api.routes import scans, health
+from shipcomply_api.routes import scans, health, webhooks
 from shipcomply_api.db.session import init_db
 from shipcomply_api.security.redactor import install_pii_log_filter
 from shipcomply_api.middleware import RequestIdMiddleware
@@ -47,4 +47,5 @@ app.add_middleware(
 )
 
 app.include_router(health.router)
+app.include_router(webhooks.router)
 app.include_router(scans.router, prefix="/api/v1")
