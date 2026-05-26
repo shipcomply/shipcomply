@@ -40,14 +40,16 @@ def _route_after_scanner(state: ScanState) -> Literal["kg_builder", END]:  # typ
     return "kg_builder"
 
 
-def _run_parallel_nodes(state: ScanState) -> dict:
-    """Fan-out: run legal_writer and code_gen concurrently, merge results."""
-    lw_result = legal_writer_node(state)
-    cg_result = code_gen_node(state)
+async def _run_parallel_nodes(state: ScanState) -> dict:
+    """Fan-out: run legal_writer and code_gen truly concurrently via thread pool."""
+    loop = asyncio.get_event_loop()
+    lw_result, cg_result = await asyncio.gather(
+        loop.run_in_executor(None, legal_writer_node, state),
+        loop.run_in_executor(None, code_gen_node, state),
+    )
     merged: dict = {}
     merged.update(lw_result)
     merged.update(cg_result)
-    # Merge step_logs
     merged["step_log"] = lw_result.get("step_log", []) + cg_result.get("step_log", [])
     merged["errors"] = lw_result.get("errors", []) + cg_result.get("errors", [])
     return merged

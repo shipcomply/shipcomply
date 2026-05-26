@@ -34,9 +34,8 @@ async def _get_jwks() -> dict:
 
 async def verify_clerk_token(token: str) -> dict:
     """Verify Clerk JWT (RS256). Returns decoded claims or raises JWTError/RuntimeError."""
-    if settings.debug and not settings.clerk_jwks_url:
-        logger.warning("DEBUG mode: skipping JWT verification — set CLERK_JWKS_URL in production")
-        return jwt.decode(token, options={"verify_signature": False})
+    if not settings.clerk_jwks_url:
+        raise RuntimeError("CLERK_JWKS_URL not configured — cannot verify tokens")
 
     jwks = await _get_jwks()
     claims = jwt.decode(token, jwks, algorithms=["RS256"], options={"verify_aud": False})

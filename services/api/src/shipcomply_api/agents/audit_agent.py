@@ -3,49 +3,11 @@ from shipcomply_api.observability.langfuse import traced
 from __future__ import annotations
 
 import logging
-from dataclasses import dataclass, field as dc_field
 
 from .state import ScanState
+from ._rebuild import rebuild_scan
 
 log = logging.getLogger(__name__)
-
-
-@dataclass
-class _Src:
-    file: str
-    line: object = None
-    pattern: object = None
-    detection_type: str = "pattern"
-
-
-@dataclass
-class _El:
-    element_type: str
-    field_name: str = ""
-    sources: list = dc_field(default_factory=list)
-    sinks: list = dc_field(default_factory=list)
-    compliance_flags: list = dc_field(default_factory=list)
-
-
-@dataclass
-class _Scan:
-    scan_id: str
-    data_elements: list
-    files_scanned: int = 0
-    errors: list = dc_field(default_factory=list)
-
-
-def _rebuild_scan(state: ScanState) -> _Scan:
-    elements = []
-    for el in state.get("data_elements", []):
-        sources = [_Src(**{k: v for k, v in s.items() if k in ("file","line","pattern","detection_type")}) for s in el.get("sources", [])]
-        elements.append(_El(
-            element_type=el["element_type"],
-            field_name=el.get("field_name", ""),
-            compliance_flags=el.get("compliance_flags", []),
-            sources=sources,
-        ))
-    return _Scan(scan_id=state["scan_id"], data_elements=elements, files_scanned=state.get("files_scanned", 0))
 
 
 @traced("audit")
@@ -62,7 +24,7 @@ def audit_node(state: ScanState) -> dict:
     try:
         from shipcomply_api.audit import AuditAgent
 
-        mock = _rebuild_scan(state)
+        mock = rebuild_scan(state)
         report = AuditAgent().audit(mock)
         md = report.to_markdown()
 
@@ -82,7 +44,7 @@ def audit_node(state: ScanState) -> dict:
             "audit_markdown": md,
             "compliance_score": float(report.score or 0),
             "findings": findings,
-            "final_status": "completed",
+            "final_status": "completed_with_errors" if state.get("errors") else "completed",
             "step_log": [{"agent": "audit", "status": "ok", "message": f"score={report.score}, findings={len(findings)}"}],
         }
     except Exception as exc:

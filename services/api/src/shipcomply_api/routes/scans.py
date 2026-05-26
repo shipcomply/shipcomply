@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, field_validator
 from sqlalchemy import select, update
@@ -127,7 +127,7 @@ async def _run_scan_pipeline(scan_id: str, repo_url: str, branch: str, jurisdict
             final = await run_scan(initial)
 
             # Persist R2 artifacts
-            policy_key = audit_key = kg_key = None
+            policy_key = audit_key = kg_key = code_key = None
             uploads = []
             if final.get("policy_markdown"):
                 policy_key = f"scans/{scan_id}/policy.md"
@@ -138,6 +138,9 @@ async def _run_scan_pipeline(scan_id: str, repo_url: str, branch: str, jurisdict
             if final.get("kg_dict"):
                 kg_key = f"scans/{scan_id}/kg.json"
                 uploads.append(r2_client.put(kg_key, json.dumps(final["kg_dict"]).encode(), "application/json"))
+            if final.get("code_files"):
+                code_key = f"scans/{scan_id}/code.json"
+                uploads.append(r2_client.put(code_key, json.dumps(final["code_files"]).encode(), "application/json"))
             if uploads:
                 await asyncio.gather(*uploads)
 
@@ -163,10 +166,10 @@ async def _run_scan_pipeline(scan_id: str, repo_url: str, branch: str, jurisdict
                     regulation=f.get("regulation"),
                 ))
 
-            status = final.get("final_status", "completed")
+            final_status = final.get("final_status", "completed")
             await db.execute(
                 update(Scan).where(Scan.id == scan_id).values(
-                    status=status,
+                    status=final_status,
                     commit_sha=final.get("commit_sha"),
                     files_scanned=final.get("files_scanned", 0),
                     compliance_score=final.get("compliance_score", 0),
@@ -191,7 +194,6 @@ async def _run_scan_pipeline(scan_id: str, repo_url: str, branch: str, jurisdict
 @router.post("/scans", response_model=ScanResponse)
 async def create_scan(
     req: ScanRequest,
-    background_tasks: BackgroundTasks,
     user: CurrentUser = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
@@ -220,7 +222,7 @@ async def create_scan(
     await db.commit()
     await db.refresh(scan)
 
-    background_tasks.add_task(_run_scan_pipeline, scan.id, req.repo_url, req.branch, req.jurisdiction)
+    asyncio.create_task(_run_scan_pipeline(scan.id, req.repo_url, req.branch, req.jurisdiction))
     return ScanResponse(scan_id=scan.id, status="queued", message="Scan enqueued")
 
 
@@ -258,21 +260,22 @@ async def stream_scan(
     org = await _get_user_org(user, db)
 
     async def event_generator():
-        terminal = {"completed", "failed"}
+        from shipcomply_api.db.session import AsyncSessionLocal
+        terminal = {"completed", "failed", "completed_with_errors"}
         for _ in range(120):  # 6 min max (120 × 3s)
             if await request.is_disconnected():
                 break
             await asyncio.sleep(3)
-            async with db.begin_nested():
-                result = await db.execute(
+            async with AsyncSessionLocal() as poll_db:
+                result = await poll_db.execute(
                     select(Scan).where(Scan.id == scan_id, Scan.org_id == org.id)
                 )
-            scan = result.scalar_one_or_none()
-            if not scan:
+                scan_row = result.scalar_one_or_none()
+            if not scan_row:
                 yield f"data: {json.dumps({'error': 'scan not found'})}\n\n"
                 return
-            yield f"data: {json.dumps({'scan_id': scan_id, 'status': scan.status})}\n\n"
-            if scan.status in terminal:
+            yield f"data: {json.dumps({'scan_id': scan_id, 'status': scan_row.status})}\n\n"
+            if scan_row.status in terminal:
                 break
         yield f"data: {json.dumps({'done': True})}\n\n"
 
@@ -351,6 +354,27 @@ async def get_scan_policy(
         except Exception:
             pass
     return {"scan_id": scan_id, "status": scan.status, "message": "Policy not yet available"}
+
+
+@router.get("/scans/{scan_id}/code")
+async def get_scan_code(
+    scan_id: str,
+    user: CurrentUser = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    org = await _get_user_org(user, db)
+    result = await db.execute(select(Scan).where(Scan.id == scan_id, Scan.org_id == org.id))
+    scan = result.scalar_one_or_none()
+    if not scan:
+        raise HTTPException(status_code=404, detail="Scan not found")
+    code_r2_key = getattr(scan, "code_r2_key", None)
+    if code_r2_key:
+        try:
+            content = await r2_client.get(code_r2_key)
+            return {"scan_id": scan_id, "status": "completed", "code_files": json.loads(content)}
+        except Exception:
+            pass
+    return {"scan_id": scan_id, "status": scan.status, "message": "Code files not yet available"}
 
 
 @router.get("/scans/{scan_id}/graph")

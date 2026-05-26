@@ -3,28 +3,11 @@ from shipcomply_api.observability.langfuse import traced
 from __future__ import annotations
 
 import logging
-from dataclasses import dataclass, field
 
 from .state import ScanState
+from ._rebuild import rebuild_scan
 
 log = logging.getLogger(__name__)
-
-
-@dataclass
-class _MinimalElement:
-    element_type: str
-    field_name: str = ""
-    sources: list = field(default_factory=list)
-    sinks: list = field(default_factory=list)
-    compliance_flags: list = field(default_factory=list)
-
-
-@dataclass
-class _MinimalScan:
-    scan_id: str
-    data_elements: list
-    files_scanned: int = 0
-    errors: list = field(default_factory=list)
 
 
 @traced("code_gen")
@@ -38,15 +21,7 @@ def code_gen_node(state: ScanState) -> dict:
     try:
         from shipcomply_api.code_gen import CodeGenerator
 
-        elements = [
-            _MinimalElement(
-                element_type=el["element_type"],
-                field_name=el.get("field_name", ""),
-                compliance_flags=el.get("compliance_flags", []),
-            )
-            for el in data_elements
-        ]
-        mock_scan = _MinimalScan(scan_id=scan_id, data_elements=elements)
+        mock_scan = rebuild_scan(state)
 
         result = CodeGenerator().generate(mock_scan)
         code_files = [{"name": f.filename, "content": f.content} for f in result.files]

@@ -3,7 +3,6 @@ from shipcomply_api.observability.langfuse import traced
 from __future__ import annotations
 
 import logging
-from dataclasses import asdict
 
 from .state import ScanState
 
@@ -36,6 +35,10 @@ def scanner_node(state: ScanState) -> dict:
                     {"file": s.file, "line": s.line, "pattern": s.pattern, "detection_type": s.detection_type}
                     for s in el.sources
                 ],
+                "sinks": [
+                    {"file": s.file, "line": s.line, "pattern": s.pattern, "detection_type": s.detection_type}
+                    for s in getattr(el, "sinks", [])
+                ],
             })
 
         return {
@@ -53,4 +56,3 @@ def scanner_node(state: ScanState) -> dict:
             "errors": [str(exc)],
             "final_status": "failed",
         }
-

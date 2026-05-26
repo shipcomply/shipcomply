@@ -87,7 +87,8 @@ export default function ScanPage({ params }: { params: Promise<{ id: string }> }
         if (cancelled) return;
         setScanStatus(scan.status);
 
-        if (scan.status === "completed") {
+        if (scan.status === "completed" || scan.status === "completed_with_errors") {
+          clearInterval(interval);
           const raw = await api.scan.audit(id, token ?? "");
           if (cancelled) return;
           const normalised: AuditData = "audit_markdown" in (raw as object)
