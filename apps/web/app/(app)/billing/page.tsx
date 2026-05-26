@@ -71,7 +71,7 @@ export default function BillingPage() {
               <div>
                 <div className="flex items-center gap-2 mb-1">
                   <h3 className="font-semibold text-bg-11">{plan.name}</h3>
-                  {plan.current && <Badge variant="mint" size="sm">Current</Badge>}
+                  {plan.current && <Badge variant="mint">Current</Badge>}
                 </div>
                 <div className="flex items-baseline gap-1">
                   <span className="text-2xl font-bold text-bg-11">{plan.price}</span>
