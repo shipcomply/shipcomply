@@ -6,7 +6,9 @@ import { api } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Download } from "lucide-react";
 
 interface Finding {
   severity: string;
@@ -70,12 +72,43 @@ function ScoreRing({ score }: { score: number }) {
   );
 }
 
+function downloadBlob(content: string, filename: string, mime = "text/plain") {
+  const url = URL.createObjectURL(new Blob([content], { type: mime }));
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 export default function ScanPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const { getToken } = useAuth();
   const [audit, setAudit] = useState<AuditData | null>(null);
   const [scanStatus, setScanStatus] = useState("loading");
   const [error, setError] = useState("");
+  const [downloading, setDownloading] = useState<string | null>(null);
+
+  async function handleDownload(type: "policy" | "audit") {
+    if (downloading) return;
+    setDownloading(type);
+    try {
+      const token = await getToken();
+      if (type === "policy") {
+        const data = await api.scan.policy(id, token ?? "") as { markdown?: string; sections?: { body: string }[] };
+        const md = data.markdown ?? data.sections?.map((s) => s.body).join("\n\n") ?? "";
+        downloadBlob(md, `policy-${id.slice(0, 8)}.md`);
+      } else {
+        const data = await api.scan.audit(id, token ?? "") as { audit_markdown?: string };
+        const md = data.audit_markdown ?? JSON.stringify(data, null, 2);
+        downloadBlob(md, `audit-${id.slice(0, 8)}.md`);
+      }
+    } catch (e) {
+      console.error("Download failed", e);
+    } finally {
+      setDownloading(null);
+    }
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -216,6 +249,32 @@ export default function ScanPage({ params }: { params: Promise<{ id: string }> }
                 </motion.div>
               ))}
             </AnimatePresence>
+          </CardContent>
+        </Card>
+      )}
+
+      {audit && (
+        <Card>
+          <CardHeader><CardTitle>Download artifacts</CardTitle></CardHeader>
+          <CardContent className="flex flex-wrap gap-3">
+            <Button
+              variant="secondary"
+              size="sm"
+              disabled={downloading === "policy"}
+              onClick={() => handleDownload("policy")}
+            >
+              <Download size={14} className="mr-2 opacity-70" />
+              {downloading === "policy" ? "Downloading…" : "policy.md"}
+            </Button>
+            <Button
+              variant="secondary"
+              size="sm"
+              disabled={downloading === "audit"}
+              onClick={() => handleDownload("audit")}
+            >
+              <Download size={14} className="mr-2 opacity-70" />
+              {downloading === "audit" ? "Downloading…" : "audit.md"}
+            </Button>
           </CardContent>
         </Card>
       )}

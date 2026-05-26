@@ -237,6 +237,35 @@ async def create_scan(
     return ScanResponse(scan_id=scan.id, status="queued", message="Scan enqueued")
 
 
+@router.get("/scans")
+async def list_scans(
+    user: CurrentUser = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+    limit: int = 20,
+):
+    org = await _get_user_org(user, db)
+    result = await db.execute(
+        select(Scan)
+        .where(Scan.org_id == org.id)
+        .order_by(Scan.started_at.desc())
+        .limit(limit)
+    )
+    scans = result.scalars().all()
+    return [
+        {
+            "scan_id": s.id,
+            "status": s.status,
+            "repo_url": s.repo_url,
+            "jurisdiction": s.jurisdiction,
+            "compliance_score": s.compliance_score,
+            "files_scanned": s.files_scanned,
+            "started_at": s.started_at.isoformat() if s.started_at else None,
+            "completed_at": s.completed_at.isoformat() if s.completed_at else None,
+        }
+        for s in scans
+    ]
+
+
 @router.get("/scans/{scan_id}")
 async def get_scan(
     scan_id: str,

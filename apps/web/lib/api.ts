@@ -31,6 +31,8 @@ export const api = {
       apiFetch(`/scans/${id}/policy`, { headers: getAuthHeaders(token) }),
     graph: (id: string, token: string) =>
       apiFetch(`/scans/${id}/graph`, { headers: getAuthHeaders(token) }),
+    list: (token: string) =>
+      apiFetch<unknown[]>("/scans", { headers: getAuthHeaders(token) }),
     localScan: (path: string) =>
       apiFetch("/scans/local", { method: "POST", body: JSON.stringify({ path }) }),
   },

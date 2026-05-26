@@ -95,6 +95,12 @@ class GeneratedPolicy:
             "> **AI-GENERATED DRAFT — REVIEW BY QUALIFIED ATTORNEY BEFORE PUBLISHING**",
             "",
         ]
+        if self.sections and all(s.confidence == 0 for s in self.sections):
+            lines.append(
+                "<!-- WARNING: regulation corpus not loaded — policy uses fallback templates "
+                "with no live regulation citations. Run `pnpm corpus:build` and restart the API. -->"
+            )
+            lines.append("")
         for section in self.sections:
             conf_label = _confidence_label(section.confidence)
             lines += [

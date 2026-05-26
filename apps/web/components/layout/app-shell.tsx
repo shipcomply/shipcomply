@@ -3,15 +3,25 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { UserButton } from "@clerk/nextjs";
 import { cn } from "@/lib/utils";
+import {
+  LayoutDashboard,
+  GitBranch,
+  ScanLine,
+  BookOpen,
+  Users,
+  Settings,
+  CreditCard,
+} from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 
-const NAV_ITEMS = [
-  { label: "Dashboard", href: "/dashboard", icon: "O" },
-  { label: "Repos", href: "/repos", icon: "G" },
-  { label: "Scans", href: "/scans", icon: "S" },
-  { label: "Knowledge", href: "/knowledge", icon: "K" },
-  { label: "Team", href: "/team", icon: "T" },
-  { label: "Settings", href: "/settings", icon: "C" },
-  { label: "Billing", href: "/billing", icon: "B" },
+const NAV_ITEMS: { label: string; href: string; Icon: LucideIcon }[] = [
+  { label: "Dashboard", href: "/dashboard", Icon: LayoutDashboard },
+  { label: "Repos",     href: "/repos",     Icon: GitBranch },
+  { label: "Scans",     href: "/scans",     Icon: ScanLine },
+  { label: "Knowledge", href: "/knowledge", Icon: BookOpen },
+  { label: "Team",      href: "/team",      Icon: Users },
+  { label: "Settings",  href: "/settings",  Icon: Settings },
+  { label: "Billing",   href: "/billing",   Icon: CreditCard },
 ];
 
 export function Sidebar() {
@@ -33,7 +43,7 @@ export function Sidebar() {
                 active ? "bg-bg-3 text-bg-11 font-medium" : "text-bg-8 hover:bg-bg-3 hover:text-bg-11"
               )}
             >
-              <span className="font-mono text-xs opacity-60 w-4">{item.icon}</span>
+              <item.Icon size={16} className="opacity-60 flex-shrink-0" />
               {item.label}
             </Link>
           );

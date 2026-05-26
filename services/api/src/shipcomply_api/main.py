@@ -23,6 +23,11 @@ async def lifespan(app: FastAPI):
         await init_db()
     except Exception as exc:
         logger.warning("DB unavailable at startup (set DATABASE_URL): %s", exc)
+    try:
+        from shipcomply_api.corpus_loader import maybe_bulk_load_corpus
+        await maybe_bulk_load_corpus()
+    except Exception as exc:
+        logger.warning("Corpus bulk-load skipped: %s", exc)
     yield
 
 

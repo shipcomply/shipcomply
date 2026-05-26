@@ -17,7 +17,7 @@ async def clerk_webhook(request: Request):
     raw_body = await request.body()
 
     if not settings.clerk_webhook_secret:
-        logger.warning("CLERK_WEBHOOK_SECRET not set — skipping verification")
+        raise HTTPException(status_code=503, detail="Webhook endpoint not configured")
     else:
         try:
             wh = Webhook(settings.clerk_webhook_secret)
