@@ -1,4 +1,4 @@
-﻿from groq import AsyncGroq
+from groq import AsyncGroq
 from shipcomply_api.config import settings
 
 

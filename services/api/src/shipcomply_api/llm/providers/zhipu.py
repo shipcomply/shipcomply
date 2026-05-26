@@ -1,4 +1,4 @@
-﻿"""Zhipu GLM provider — GLM-4.7-Flash is fully free with no cap."""
+"""Zhipu GLM provider — GLM-4.7-Flash is fully free with no cap."""
 import httpx
 from shipcomply_api.config import settings
 

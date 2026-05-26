@@ -1,4 +1,4 @@
-﻿import logging
+import logging
 import httpx
 from shipcomply_api.config import settings
 

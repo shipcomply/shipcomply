@@ -1,4 +1,4 @@
-﻿"""LLM client — routes requests to provider chain based on task type.
+"""LLM client — routes requests to provider chain based on task type.
 
 Provider order (classification / short gen <=4K ctx):
   Groq -> Cerebras -> NVIDIA -> Zhipu -> Ollama

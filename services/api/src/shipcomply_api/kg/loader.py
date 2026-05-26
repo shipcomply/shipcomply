@@ -1,4 +1,4 @@
-﻿"""Seed KG from JSON snapshots stored in R2 or bundled as fixtures."""
+"""Seed KG from JSON snapshots stored in R2 or bundled as fixtures."""
 from __future__ import annotations
 
 import json

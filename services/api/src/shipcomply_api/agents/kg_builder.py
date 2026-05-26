@@ -1,4 +1,4 @@
-﻿from shipcomply_api.observability.langfuse import traced
+from shipcomply_api.observability.langfuse import traced
 """KGBuilder agent — builds scan knowledge graph from state data_elements."""
 from __future__ import annotations
 

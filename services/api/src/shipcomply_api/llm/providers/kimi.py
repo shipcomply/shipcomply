@@ -1,4 +1,4 @@
-﻿"""Moonshot Kimi provider — 256K context window, useful for large legal corpus reads."""
+"""Moonshot Kimi provider — 256K context window, useful for large legal corpus reads."""
 import httpx
 from shipcomply_api.config import settings
 

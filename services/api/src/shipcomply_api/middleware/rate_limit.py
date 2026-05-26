@@ -1,4 +1,4 @@
-﻿import time
+import time
 from datetime import datetime, timezone
 from collections import defaultdict
 from fastapi import Request, HTTPException, status

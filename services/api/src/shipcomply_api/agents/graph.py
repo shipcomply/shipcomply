@@ -1,4 +1,4 @@
-﻿"""
+"""
 LangGraph agent graph for ShipComply scan pipeline.
 
 Flow:

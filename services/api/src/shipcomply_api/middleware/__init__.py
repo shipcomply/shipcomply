@@ -1,4 +1,4 @@
-﻿import time
+import time
 import uuid
 from typing import Callable
 from fastapi import Request, Response

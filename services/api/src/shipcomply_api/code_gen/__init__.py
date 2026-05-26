@@ -1,4 +1,4 @@
-﻿"""
+"""
 Code Generator — produces working TypeScript/React artifacts from a ScanResult.
 
 Artifacts:

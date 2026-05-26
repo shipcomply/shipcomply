@@ -1,4 +1,4 @@
-﻿import httpx
+import httpx
 from shipcomply_api.config import settings
 
 

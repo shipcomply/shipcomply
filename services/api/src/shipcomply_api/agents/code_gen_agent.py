@@ -1,4 +1,4 @@
-﻿from shipcomply_api.observability.langfuse import traced
+from shipcomply_api.observability.langfuse import traced
 """CodeGen agent — emits consent banner + Next.js endpoints."""
 from __future__ import annotations
 

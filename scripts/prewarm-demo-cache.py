@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 """
 Pre-warm demo cache — runs scan+policy+audit against the pinned hero example
 and seeds the llm_cache table so judging never hits a live LLM cold.

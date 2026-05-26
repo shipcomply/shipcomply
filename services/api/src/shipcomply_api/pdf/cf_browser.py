@@ -1,4 +1,4 @@
-﻿"""
+"""
 Cloudflare Browser Rendering client — converts HTML to PDF via CF Workers API.
 Falls back to plain HTML bytes if CF_BROWSER_RENDERING_URL not configured.
 """

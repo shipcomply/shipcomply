@@ -1,4 +1,4 @@
-﻿"""JWT replay denylist — in-process store for revoked JTI tokens until exp."""
+"""JWT replay denylist — in-process store for revoked JTI tokens until exp."""
 from __future__ import annotations
 
 import time

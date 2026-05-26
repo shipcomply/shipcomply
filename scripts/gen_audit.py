@@ -1,4 +1,4 @@
-﻿"""CLI wrapper: pnpm gen:audit <path>"""
+"""CLI wrapper: pnpm gen:audit <path>"""
 import sys, os, argparse
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "services", "api", "src"))

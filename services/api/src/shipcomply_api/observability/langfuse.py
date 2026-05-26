@@ -1,4 +1,4 @@
-﻿import logging
+import logging
 import functools
 import inspect
 import time

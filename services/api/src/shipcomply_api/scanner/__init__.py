@@ -1,4 +1,4 @@
-﻿"""
+"""
 Scanner v0.2 — tree-sitter AST walk for PII detection.
 
 Schema (canonical — all consumers must match):

@@ -1,4 +1,4 @@
-﻿"""Knowledge Graph — maps DataElements to sources, sinks, and compliance regulations."""
+"""Knowledge Graph — maps DataElements to sources, sinks, and compliance regulations."""
 from __future__ import annotations
 from dataclasses import dataclass, field
 from shipcomply_api.scanner import ScanResult

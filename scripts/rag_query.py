@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 """CLI wrapper: pnpm rag:query "email collection lawful basis"
 Optionally pass --jurisdiction GDPR or DPDP (default DPDP).
 """

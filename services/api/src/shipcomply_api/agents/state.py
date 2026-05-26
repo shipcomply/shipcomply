@@ -1,4 +1,4 @@
-﻿"""ScanState — shared state carried through the LangGraph agent graph."""
+"""ScanState — shared state carried through the LangGraph agent graph."""
 from __future__ import annotations
 
 from typing import Annotated, Any, Optional

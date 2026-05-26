@@ -1,4 +1,4 @@
-﻿"""Hybrid BM25 + pgvector retrieval with cross-encoder re-ranking."""
+"""Hybrid BM25 + pgvector retrieval with cross-encoder re-ranking."""
 from __future__ import annotations
 import logging
 import os

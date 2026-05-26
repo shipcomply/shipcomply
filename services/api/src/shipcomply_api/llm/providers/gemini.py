@@ -1,4 +1,4 @@
-﻿from google import genai
+from google import genai
 from google.genai import types
 from shipcomply_api.config import settings
 

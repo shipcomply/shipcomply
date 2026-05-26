@@ -1,4 +1,4 @@
-﻿"""
+"""
 Build RAG corpus: download legal texts, chunk by section, embed with BGE-small, upload to pgvector.
 
 Usage:

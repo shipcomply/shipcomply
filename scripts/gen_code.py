@@ -1,4 +1,4 @@
-﻿"""CLI wrapper: pnpm gen:code <path> [--jurisdiction DPDP]"""
+"""CLI wrapper: pnpm gen:code <path> [--jurisdiction DPDP]"""
 import sys
 import os
 import argparse

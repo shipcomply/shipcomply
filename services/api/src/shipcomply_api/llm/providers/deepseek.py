@@ -1,4 +1,4 @@
-﻿"""DeepSeek provider with native prompt caching (cache miss = full price; hit = 1/10th)."""
+"""DeepSeek provider with native prompt caching (cache miss = full price; hit = 1/10th)."""
 import httpx
 from shipcomply_api.config import settings
 

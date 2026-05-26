@@ -1,4 +1,4 @@
-﻿import logging
+import logging
 from shipcomply_api.config import settings
 
 logger = logging.getLogger(__name__)

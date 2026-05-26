@@ -1,4 +1,4 @@
-﻿"""
+"""
 Audit Agent — scores compliance and generates a Markdown + PDF audit report.
 
 Scoring model:

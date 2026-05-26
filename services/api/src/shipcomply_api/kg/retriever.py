@@ -1,4 +1,4 @@
-﻿"""KG retriever — finds relevant regulation sections for detected DataElement types."""
+"""KG retriever — finds relevant regulation sections for detected DataElement types."""
 from __future__ import annotations
 
 import logging

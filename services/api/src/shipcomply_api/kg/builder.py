@@ -1,4 +1,4 @@
-﻿"""KG builder — constructs scan-level knowledge graph linking DataElements to DPDP sections."""
+"""KG builder — constructs scan-level knowledge graph linking DataElements to DPDP sections."""
 from __future__ import annotations
 
 import uuid

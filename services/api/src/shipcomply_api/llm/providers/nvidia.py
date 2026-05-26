@@ -1,4 +1,4 @@
-﻿"""NVIDIA NIM provider — OpenAI-compatible endpoint at api.build.nvidia.com."""
+"""NVIDIA NIM provider — OpenAI-compatible endpoint at api.build.nvidia.com."""
 import httpx
 from shipcomply_api.config import settings
 

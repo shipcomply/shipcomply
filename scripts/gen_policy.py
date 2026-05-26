@@ -1,4 +1,4 @@
-﻿"""CLI wrapper: pnpm gen:policy <path> [--jurisdiction DPDP|GDPR|CCPA]"""
+"""CLI wrapper: pnpm gen:policy <path> [--jurisdiction DPDP|GDPR|CCPA]"""
 import sys
 import os
 import argparse

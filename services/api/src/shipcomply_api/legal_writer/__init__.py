@@ -1,4 +1,4 @@
-﻿"""
+"""
 Legal Writer — generates a PRIVACY.md from scan results + RAG chunks.
 
 Every generated section has:

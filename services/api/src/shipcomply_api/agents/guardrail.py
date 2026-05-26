@@ -1,4 +1,4 @@
-﻿from shipcomply_api.observability.langfuse import traced
+from shipcomply_api.observability.langfuse import traced
 """Guardrail agent — validates every citation in generated policy resolves to KG node."""
 from __future__ import annotations
 
