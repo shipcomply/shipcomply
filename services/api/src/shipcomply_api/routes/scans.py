@@ -86,97 +86,106 @@ class ScanResponse(BaseModel):
 
 
 async def _run_scan_pipeline(scan_id: str, repo_url: str, branch: str, jurisdiction: str) -> None:
-    """Full scan pipeline as background task."""
+    """Full scan pipeline — delegates to LangGraph agent graph."""
     from shipcomply_api.db.session import AsyncSessionLocal
-    from shipcomply_api.scanner import scan_repo
-    from shipcomply_api.scanner.knowledge_graph import build_graph
-    from shipcomply_api.legal_writer import PolicyGenerator
-    from shipcomply_api.audit import AuditAgent
-    from shipcomply_api.llm import llm_client
+    from shipcomply_api.agents.graph import run_scan
 
     async with AsyncSessionLocal() as db:
-        async def _update_status(s: str) -> None:
-            await db.execute(update(Scan).where(Scan.id == scan_id).values(status=s))
+        async def _set_status(s: str, **extra) -> None:
+            await db.execute(update(Scan).where(Scan.id == scan_id).values(status=s, **extra))
             await db.commit()
 
         try:
-            await _update_status("cloning")
-            import tempfile
-            import subprocess
-            with tempfile.TemporaryDirectory(prefix="shipcomply-") as tmp:
-                result = subprocess.run(
-                    ["git", "clone", "--depth=1", "--branch", branch, "--", repo_url, tmp],
-                    capture_output=True, text=True, timeout=120,
-                )
-                if result.returncode != 0:
-                    raise RuntimeError(f"git clone failed: {result.stderr[:500]}")
+            await _set_status("cloning")
 
-                await _update_status("scanning")
-                scan_result = scan_repo(tmp)
-                commit_sha = subprocess.run(
-                    ["git", "-C", tmp, "rev-parse", "HEAD"],
-                    capture_output=True, text=True,
-                ).stdout.strip()
+            initial: dict = {
+                "scan_id": scan_id,
+                "repo_url": repo_url,
+                "branch": branch,
+                "jurisdiction": jurisdiction,
+                "offline": False,
+                "repo_path": None,
+                "commit_sha": None,
+                "file_list": [],
+                "data_elements": [],
+                "files_scanned": 0,
+                "kg_dict": None,
+                "policy_markdown": None,
+                "policy_r2_key": None,
+                "code_files": [],
+                "guardrail_passed": False,
+                "guardrail_violations": [],
+                "audit_markdown": None,
+                "audit_r2_key": None,
+                "compliance_score": 0.0,
+                "findings": [],
+                "step_log": [],
+                "errors": [],
+                "final_status": "running",
+            }
 
-                await _update_status("building_kg")
-                graph = build_graph(scan_result)
+            final = await run_scan(initial)
 
-                await _update_status("writing_policy")
-                policy = PolicyGenerator(llm_client=llm_client).generate(scan_result, jurisdiction=jurisdiction)
-
-                await _update_status("auditing")
-                audit_report = AuditAgent().audit(scan_result)
-
+            # Persist R2 artifacts
+            policy_key = audit_key = kg_key = None
+            uploads = []
+            if final.get("policy_markdown"):
                 policy_key = f"scans/{scan_id}/policy.md"
+                uploads.append(r2_client.put(policy_key, final["policy_markdown"].encode(), "text/markdown"))
+            if final.get("audit_markdown"):
                 audit_key = f"scans/{scan_id}/audit.md"
+                uploads.append(r2_client.put(audit_key, final["audit_markdown"].encode(), "text/markdown"))
+            if final.get("kg_dict"):
                 kg_key = f"scans/{scan_id}/kg.json"
+                uploads.append(r2_client.put(kg_key, json.dumps(final["kg_dict"]).encode(), "application/json"))
+            if uploads:
+                await asyncio.gather(*uploads)
 
-                await asyncio.gather(
-                    r2_client.put(policy_key, policy.to_markdown().encode(), "text/markdown"),
-                    r2_client.put(audit_key, audit_report.to_markdown().encode(), "text/markdown"),
-                    r2_client.put(kg_key, json.dumps(graph.to_dict()).encode(), "application/json"),
+            # Persist DataElement rows
+            for el in final.get("data_elements", []):
+                db.add(DataElementRow(
+                    scan_id=scan_id,
+                    element_type=el["element_type"],
+                    field_name=el.get("field_name", ""),
+                    compliance_flags=el.get("compliance_flags", []),
+                    sources=el.get("sources", []),
+                ))
+
+            # Persist Finding rows
+            for f in final.get("findings", []):
+                db.add(FindingRow(
+                    scan_id=scan_id,
+                    severity=f.get("severity", "INFO"),
+                    title=f.get("title", "")[:512],
+                    detail=f.get("detail", "") or "",
+                    file_path=f.get("file_path"),
+                    line_number=f.get("line_number"),
+                    regulation=f.get("regulation"),
+                ))
+
+            status = final.get("final_status", "completed")
+            await db.execute(
+                update(Scan).where(Scan.id == scan_id).values(
+                    status=status,
+                    commit_sha=final.get("commit_sha"),
+                    files_scanned=final.get("files_scanned", 0),
+                    compliance_score=final.get("compliance_score", 0),
+                    policy_r2_key=policy_key,
+                    audit_r2_key=audit_key,
+                    kg_r2_key=kg_key,
+                    completed_at=datetime.now(timezone.utc),
                 )
-
-                for el in scan_result.data_elements:
-                    db.add(DataElementRow(
-                        scan_id=scan_id,
-                        element_type=el.element_type,
-                        field_name=el.field_name,
-                        compliance_flags=el.compliance_flags,
-                        sources=[{"file": s.file, "line": s.line, "pattern": s.pattern} for s in el.sources],
-                    ))
-
-                # Persist Finding rows (M5)
-                for finding in getattr(audit_report, "findings", []):
-                    db.add(FindingRow(
-                        scan_id=scan_id,
-                        severity=getattr(finding, "severity", "INFO"),
-                        title=getattr(finding, "title", "")[:512],
-                        detail=getattr(finding, "detail", "") or "",
-                        file_path=getattr(finding, "file_path", None),
-                        line_number=getattr(finding, "line_number", None),
-                        regulation=getattr(finding, "regulation", None),
-                    ))
-
-                await db.execute(
-                    update(Scan).where(Scan.id == scan_id).values(
-                        status="completed",
-                        commit_sha=commit_sha,
-                        files_scanned=scan_result.files_scanned,
-                        compliance_score=audit_report.score,
-                        policy_r2_key=policy_key,
-                        audit_r2_key=audit_key,
-                        kg_r2_key=kg_key,
-                        completed_at=datetime.now(timezone.utc),
-                    )
-                )
-                await db.commit()
+            )
+            await db.commit()
 
         except Exception as exc:
             logger.error("Scan %s failed: %s", scan_id, exc, exc_info=True)
-            await _update_status("failed")
-            await db.execute(update(Scan).where(Scan.id == scan_id).values(error_message=str(exc)[:2000]))
-            await db.commit()
+            try:
+                await _set_status("failed")
+                await db.execute(update(Scan).where(Scan.id == scan_id).values(error_message=str(exc)[:2000]))
+                await db.commit()
+            except Exception:
+                pass
 
 
 @router.post("/scans", response_model=ScanResponse)
@@ -404,3 +413,4 @@ async def generate_local_policy(request: Request, body: dict):
         "markdown": policy.to_markdown(),
         "sections": policy.to_dict()["sections"],
     }
+
