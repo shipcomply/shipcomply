@@ -120,7 +120,7 @@ export default function KnowledgePage() {
                 <span className="w-2.5 h-2.5 rounded-full flex-shrink-0"
                   style={{ background: TYPE_COLOR[selected.type] }} />
                 {selected.label}
-                <Badge variant="outline" className="ml-1 text-xs">{TYPE_LABEL[selected.type]}</Badge>
+                <Badge variant="default" className="ml-1 text-xs">{TYPE_LABEL[selected.type]}</Badge>
               </CardTitle>
             </CardHeader>
             <CardContent className="text-sm text-bg-7 space-y-2">
