@@ -60,7 +60,7 @@ pnpm scan:sample       # smoke test: scan examples/sample-nextjs-app
 pnpm scan:monorepo     # smoke test: scan examples/sample-nextjs-monorepo
 pnpm corpus:build      # download + chunk + embed legal texts
 pnpm api-client:gen    # FastAPI OpenAPI -> packages/shared/src/api-client/
-pnpm db:reset          # restore from scripts/seed-supabase.sql
+pnpm db:reset          # restore from scripts/seed-neon.sql
 pnpm demo:offline      # full stack offline (Ollama + local Postgres)
 pnpm e2e               # Playwright E2E tests
 ```
@@ -104,7 +104,7 @@ Enforced in `services/api/src/shipcomply_api/legal_writer/` — do not remove.
 
 - CLI never uploads raw source code — only structured JSON (element names, paths, line numbers)
 - PII redactor middleware on every logger (`security/redactor.py`) — strips emails, phones, names from logs
-- OAuth tokens stored via Supabase Vault, never in plain env vars at rest
+- OAuth tokens stored encrypted in Neon Postgres, never in plain env vars at rest
 - API ephemeral worker clones to `/tmp`, wipes on scan completion
 
 ## 10. Idempotent Generation

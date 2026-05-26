@@ -11,10 +11,6 @@ class Settings(BaseSettings):
     clerk_jwks_url: str = ""
     clerk_webhook_secret: str = ""
 
-    # Legacy Supabase — kept during migration; remove after
-    supabase_url: str = ""
-    supabase_service_role_key: str = ""
-
     # LLM providers — existing
     groq_api_key: str = ""
     gemini_api_key: str = ""

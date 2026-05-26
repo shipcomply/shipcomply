@@ -646,18 +646,18 @@ GitHub Actions alone limit you to CI-scoped operations and per-workflow tokens.
 | **Frontend (Dashboard)** | Next.js 14 + Tailwind + shadcn/ui | Standard, fast, hackathon-friendly |
 | **API** | FastAPI (Python) | Native fit with Codex SDK + Tree-sitter Python bindings + RAG ecosystem |
 | **Job Queue** | Redis + BullMQ (Node) OR Celery (Python) | Industry standard for async workers; matches reference architecture |
-| **Database** | PostgreSQL (Supabase for hackathon) | Free tier, instant auth, real-time subscriptions |
+| **Database** | PostgreSQL (Neon serverless) | Free tier, serverless autoscaling, pgvector built-in |
 | **Vector DB** | ChromaDB (hackathon) → Pinecone (production) | Chroma is local + free for hackathon; Pinecone scales |
 | **Knowledge Graph** | Neo4j (V2) — for hackathon, JSON in Postgres | Neo4j is overkill for 7-day build; defer to V2 |
 | **Code Parsing** | tree-sitter (npm: web-tree-sitter for browser, py-tree-sitter for backend) | Industry standard; supports 40+ languages via grammars |
 | **LLM** | OpenAI Codex + GPT-5.5 (function calling) | Hackathon is Codex-themed; use it deeply |
 | **Embeddings** | OpenAI text-embedding-3-small | Cheap, fast, good enough for legal corpus this size |
-| **Storage** | Supabase Storage / S3 | For generated artifacts |
+| **Storage** | Cloudflare R2 / S3 | For generated artifacts |
 | **PDF Generation** | Puppeteer (Node) OR WeasyPrint (Python) | Both work; Puppeteer renders HTML→PDF cleanly |
 | **CLI** | Node.js + Commander.js + Ink (React for CLI) | `npx shipcomply` distribution; Ink gives us the streaming-UI demo magic |
 | **GitHub App** | Probot (Node) — Octokit-based | Standard for GitHub App development |
 | **Deployment** | Vercel (frontend) + Railway/Render (backend) | Hackathon-friendly free tiers |
-| **Auth** | Supabase Auth (Google OAuth + GitHub OAuth) | Built-in, free |
+| **Auth** | Clerk (Google OAuth + GitHub OAuth) | Built-in, free tier, Clerk v5 |
 
 ### Why Python Backend + Node CLI (Hybrid)
 
@@ -674,7 +674,7 @@ The CLI calls the backend API. No duplicated logic.
 | Docker (for hackathon) | Adds setup complexity; deploy directly to Vercel/Railway |
 | GraphQL | REST is faster to build; no client need for GraphQL flexibility |
 | Multi-language scanner support (V1) | Scope: JS/TS + Next.js only for hackathon. Python in V2. |
-| Custom auth | Use Supabase; don't roll our own |
+| Custom auth | Use Clerk; don't roll our own |
 
 ---
 
@@ -748,7 +748,7 @@ CREATE TABLE artifacts (
   scan_id UUID REFERENCES scans(id) ON DELETE CASCADE,
   artifact_type TEXT NOT NULL, -- privacy_policy|tos|cookie_policy|consent_banner|deletion_api|export_api|audit_report
   format TEXT NOT NULL, -- markdown|tsx|ts|py|pdf|json
-  storage_url TEXT NOT NULL, -- S3/Supabase Storage URL
+  storage_url TEXT NOT NULL, -- Cloudflare R2 / S3 URL
   version INTEGER DEFAULT 1,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -1104,7 +1104,7 @@ npx shipcomply init
 
 - [ ] Buy domain: `shipcomply.dev` or `shipcomply.in`
 - [ ] Create GitHub org: `shipcomply`
-- [ ] Set up Supabase project (free tier)
+- [ ] Set up Neon project (free tier)
 - [ ] Set up Vercel project for frontend
 - [ ] Set up Railway/Render for backend
 - [ ] **Pre-build the RAG corpus:**
@@ -1122,7 +1122,7 @@ npx shipcomply init
 
 - Scaffold Next.js dashboard (use shadcn/ui starter)
 - Scaffold FastAPI backend
-- Supabase Auth working (Google + GitHub OAuth)
+- Clerk Auth working (Google + GitHub OAuth)
 - Tree-sitter integration for TypeScript
 - Detect form inputs (`<input name="...">`)
 - Detect API routes (`app/api/**/route.ts`)
