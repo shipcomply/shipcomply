@@ -1,6 +1,4 @@
-﻿{
+{
   "framework": "nextjs",
-  "rootDirectory": "apps/web",
-  "buildCommand": "cd ../.. && pnpm turbo build --filter=web",
-  "installCommand": "cd ../.. && pnpm install"
+  "installCommand": "npm install --include=dev"
 }
