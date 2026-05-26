@@ -1,4 +1,4 @@
-﻿"""Scanner tests — CI gate for Day-1 demo."""
+﻿"""Scanner tests — fixed field names from el.name -> el.element_type, result.scanned_files -> result.files_scanned."""
 import sys
 from pathlib import Path
 
@@ -27,14 +27,14 @@ def test_exclude_build_dirs():
 
 def test_scan_sample_app_minimum_elements():
     result = scan_repo(SAMPLE)
-    names = {el.name for el in result.data_elements}
-    assert result.scanned_files > 0, "No files scanned"
-    assert len(names) >= 5, f"Expected >=5 PII types, got {names}"
-    assert "email" in names, "email not detected"
-    assert "name" in names, "name not detected"
-    assert "phone" in names, "phone not detected"
-    assert "address" in names, "address not detected"
-    assert "dob" in names, "dob not detected"
+    types = {el.element_type for el in result.data_elements}
+    assert result.files_scanned > 0, "No files scanned"
+    assert len(types) >= 5, f"Expected >=5 PII types, got {types}"
+    assert "email" in types, "email not detected"
+    assert "name" in types, "name not detected"
+    assert "phone" in types, "phone not detected"
+    assert "address" in types, "address not detected"
+    assert "dob" in types, "dob not detected"
 
 
 def test_scan_excludes_test_files():

@@ -1,22 +1,80 @@
-﻿/** @type {import('tailwindcss').Config} */
-module.exports = {
+﻿import type { Config } from "tailwindcss";
+
+const config: Config = {
+  darkMode: "class",
   content: [
-    "./app/**/*.{js,ts,jsx,tsx,mdx}",
-    "./components/**/*.{js,ts,jsx,tsx,mdx}",
-    "../../packages/ui/**/*.{js,ts,jsx,tsx}",
+    "./app/**/*.{ts,tsx}",
+    "./components/**/*.{ts,tsx}",
+    "../../packages/ui/**/*.{ts,tsx}",
   ],
   theme: {
     extend: {
       colors: {
-        background: "#0a0a0f",
-        surface: "#15151c",
-        primary: "#63ffb5",
+        bg: {
+          0: "#0a0a0f",
+          1: "#0f0f15",
+          2: "#14141c",
+          3: "#1a1a24",
+          4: "#22222e",
+          5: "#2c2c3a",
+          6: "#383847",
+          7: "#474758",
+          8: "#6b6b82",
+          9: "#8f8fa6",
+          10: "#b8b8cc",
+          11: "#e4e4f0",
+        },
+        mint: {
+          3: "#0a2e1f",
+          5: "#104d33",
+          7: "#2d9e6e",
+          9: "#63ffb5",
+          11: "#b8ffdf",
+        },
+        success: "#22c55e",
+        warning: "#f59e0b",
+        danger: "#ef4444",
+        info: "#3b82f6",
       },
       fontFamily: {
-        sans: ["Inter", "system-ui", "sans-serif"],
-        mono: ["JetBrains Mono", "monospace"],
+        sans: ["var(--font-inter)", "system-ui", "sans-serif"],
+        mono: ["var(--font-mono)", "JetBrains Mono", "Fira Code", "monospace"],
+      },
+      borderRadius: {
+        xs: "4px",
+        sm: "6px",
+        md: "8px",
+        lg: "12px",
+        xl: "16px",
+        "2xl": "24px",
+      },
+      boxShadow: {
+        "glow-sm": "0 0 12px rgba(99, 255, 181, 0.12)",
+        "glow-md": "0 0 24px rgba(99, 255, 181, 0.18)",
+        "glow-lg": "0 0 48px rgba(99, 255, 181, 0.24)",
+      },
+      transitionTimingFunction: {
+        "out-cubic": "cubic-bezier(0.33, 1, 0.68, 1)",
+        "out-quint": "cubic-bezier(0.22, 1, 0.36, 1)",
+      },
+      transitionDuration: {
+        fast: "150ms",
+        base: "250ms",
+        slow: "400ms",
+      },
+      animation: {
+        "fade-in": "fadeIn 250ms cubic-bezier(0.33, 1, 0.68, 1) forwards",
+        "slide-up": "slideUp 400ms cubic-bezier(0.22, 1, 0.36, 1) forwards",
+        "count-up": "countUp 800ms cubic-bezier(0.22, 1, 0.36, 1) forwards",
+      },
+      keyframes: {
+        fadeIn: { from: { opacity: "0" }, to: { opacity: "1" } },
+        slideUp: { from: { opacity: "0", transform: "translateY(16px)" }, to: { opacity: "1", transform: "translateY(0)" } },
+        countUp: { from: { transform: "scale(0.8)", opacity: "0" }, to: { transform: "scale(1)", opacity: "1" } },
       },
     },
   },
   plugins: [],
 };
+
+export default config;
