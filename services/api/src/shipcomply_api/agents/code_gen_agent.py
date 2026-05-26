@@ -1,4 +1,5 @@
-﻿"""CodeGen agent — emits consent banner + Next.js endpoints."""
+﻿from shipcomply_api.observability.langfuse import traced
+"""CodeGen agent — emits consent banner + Next.js endpoints."""
 from __future__ import annotations
 
 import logging
@@ -26,6 +27,7 @@ class _MinimalScan:
     errors: list = field(default_factory=list)
 
 
+@traced("code_gen")
 def code_gen_node(state: ScanState) -> dict:
     if state.get("final_status") == "failed":
         return {"code_files": [], "step_log": [{"agent": "code_gen", "status": "skipped", "message": "upstream failed"}]}
@@ -59,3 +61,4 @@ def code_gen_node(state: ScanState) -> dict:
             "code_files": [],
             "step_log": [{"agent": "code_gen", "status": "warning", "message": str(exc)}],
         }
+

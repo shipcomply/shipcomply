@@ -1,4 +1,5 @@
-﻿"""Cloner agent — validates repo_url, git-clones to /tmp, records commit SHA."""
+﻿from shipcomply_api.observability.langfuse import traced
+"""Cloner agent — validates repo_url, git-clones to /tmp, records commit SHA."""
 from __future__ import annotations
 
 import logging
@@ -14,6 +15,7 @@ log = logging.getLogger(__name__)
 _CLONE_DIRS: dict[str, tempfile.TemporaryDirectory] = {}  # type: ignore[type-arg]
 
 
+@traced("cloner")
 def cloner_node(state: ScanState) -> dict:
     scan_id = state["scan_id"]
     repo_url = state["repo_url"]
@@ -65,3 +67,4 @@ def cleanup_clone(scan_id: str) -> None:
             obj.cleanup()
         except Exception:
             pass
+

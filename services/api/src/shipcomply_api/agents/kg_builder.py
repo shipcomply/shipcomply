@@ -1,4 +1,5 @@
-﻿"""KGBuilder agent — builds scan knowledge graph from state data_elements."""
+﻿from shipcomply_api.observability.langfuse import traced
+"""KGBuilder agent — builds scan knowledge graph from state data_elements."""
 from __future__ import annotations
 
 import logging
@@ -47,6 +48,7 @@ def _rebuild_scan(state: ScanState) -> _Scan:
     return _Scan(scan_id=state["scan_id"], data_elements=elements, files_scanned=state.get("files_scanned", 0))
 
 
+@traced("kg_builder")
 def kg_builder_node(state: ScanState) -> dict:
     if state.get("final_status") == "failed":
         return {"kg_dict": None, "step_log": [{"agent": "kg_builder", "status": "skipped", "message": "upstream failed"}]}
@@ -68,3 +70,4 @@ def kg_builder_node(state: ScanState) -> dict:
             "kg_dict": {},
             "step_log": [{"agent": "kg_builder", "status": "warning", "message": str(exc)}],
         }
+

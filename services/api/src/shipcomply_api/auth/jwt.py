@@ -5,12 +5,13 @@ from jose import JWTError, jwt
 import httpx
 
 from shipcomply_api.config import settings
+from shipcomply_api.auth.denylist import is_denied, deny
 
 logger = logging.getLogger(__name__)
 
 _jwks_cache: Optional[dict] = None
 _jwks_cached_at: float = 0.0
-_JWKS_TTL = 600  # 10 minutes
+_JWKS_TTL = 600
 
 
 async def _get_jwks() -> dict:
@@ -38,14 +39,26 @@ async def verify_clerk_token(token: str) -> dict:
         return jwt.decode(token, options={"verify_signature": False})
 
     jwks = await _get_jwks()
-    # python-jose handles JWK sets natively; pass the full {"keys":[...]} dict
-    claims = jwt.decode(
-        token,
-        jwks,
-        algorithms=["RS256"],
-        options={"verify_aud": False},
-    )
-    # Explicit expiry check (belt-and-suspenders)
+    claims = jwt.decode(token, jwks, algorithms=["RS256"], options={"verify_aud": False})
+
     if "exp" not in claims:
         raise JWTError("Token missing exp claim")
+
+    # Replay denylist — check revoked JTI
+    jti = claims.get("jti")
+    if jti and is_denied(jti):
+        raise JWTError("Token has been revoked")
+
     return claims
+
+
+async def revoke_token(token: str) -> None:
+    """Add a token's JTI to the denylist until its expiry."""
+    try:
+        claims = jwt.decode(token, options={"verify_signature": False})
+        jti = claims.get("jti")
+        exp = claims.get("exp", 0)
+        if jti:
+            deny(jti, float(exp))
+    except Exception as exc:
+        logger.warning("revoke_token: could not extract jti: %s", exc)

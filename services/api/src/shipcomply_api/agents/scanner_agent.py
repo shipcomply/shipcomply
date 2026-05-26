@@ -1,4 +1,5 @@
-﻿"""Scanner agent — wraps shipcomply_api.scanner.scan_repo."""
+﻿from shipcomply_api.observability.langfuse import traced
+"""Scanner agent — wraps shipcomply_api.scanner.scan_repo."""
 from __future__ import annotations
 
 import logging
@@ -9,6 +10,7 @@ from .state import ScanState
 log = logging.getLogger(__name__)
 
 
+@traced("scanner")
 def scanner_node(state: ScanState) -> dict:
     repo_path = state.get("repo_path")
     scan_id = state["scan_id"]
@@ -51,3 +53,4 @@ def scanner_node(state: ScanState) -> dict:
             "errors": [str(exc)],
             "final_status": "failed",
         }
+

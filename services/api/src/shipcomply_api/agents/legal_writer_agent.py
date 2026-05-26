@@ -1,4 +1,5 @@
-﻿"""LegalWriter agent — generates privacy policy using PolicyGenerator."""
+﻿from shipcomply_api.observability.langfuse import traced
+"""LegalWriter agent — generates privacy policy using PolicyGenerator."""
 from __future__ import annotations
 
 import logging
@@ -47,6 +48,7 @@ def _rebuild_scan(state: ScanState) -> _Scan:
     return _Scan(scan_id=state["scan_id"], data_elements=elements, files_scanned=state.get("files_scanned", 0))
 
 
+@traced("legal_writer")
 def legal_writer_node(state: ScanState) -> dict:
     if state.get("final_status") == "failed":
         return {"policy_markdown": None, "step_log": [{"agent": "legal_writer", "status": "skipped", "message": "upstream failed"}]}
@@ -73,3 +75,4 @@ def legal_writer_node(state: ScanState) -> dict:
             "step_log": [{"agent": "legal_writer", "status": "error", "message": str(exc)}],
             "errors": [f"legal_writer: {exc}"],
         }
+

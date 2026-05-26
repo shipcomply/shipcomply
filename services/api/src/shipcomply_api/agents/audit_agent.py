@@ -1,4 +1,5 @@
-﻿"""Audit agent — scoring + markdown report from state data_elements."""
+﻿from shipcomply_api.observability.langfuse import traced
+"""Audit agent — scoring + markdown report from state data_elements."""
 from __future__ import annotations
 
 import logging
@@ -47,6 +48,7 @@ def _rebuild_scan(state: ScanState) -> _Scan:
     return _Scan(scan_id=state["scan_id"], data_elements=elements, files_scanned=state.get("files_scanned", 0))
 
 
+@traced("audit")
 def audit_node(state: ScanState) -> dict:
     if state.get("final_status") == "failed":
         return {
@@ -93,3 +95,4 @@ def audit_node(state: ScanState) -> dict:
             "step_log": [{"agent": "audit", "status": "error", "message": str(exc)}],
             "errors": [str(exc)],
         }
+

@@ -37,6 +37,7 @@ class Settings(BaseSettings):
     cf_r2_endpoint: str = ""
     cf_kv_namespace_id: str = ""
     cf_queue_name: str = "scan-jobs"
+    cf_browser_rendering_url: str = ""
 
     # Stripe
     stripe_secret_key: str = ""
@@ -83,3 +84,4 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
+

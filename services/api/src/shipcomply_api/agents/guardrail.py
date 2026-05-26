@@ -1,4 +1,5 @@
-﻿"""Guardrail agent — validates every citation in generated policy resolves to KG node."""
+﻿from shipcomply_api.observability.langfuse import traced
+"""Guardrail agent — validates every citation in generated policy resolves to KG node."""
 from __future__ import annotations
 
 import logging
@@ -11,6 +12,7 @@ log = logging.getLogger(__name__)
 _CITATION_RE = re.compile(r"\b(DPDP|GDPR|CCPA)[:\s]+(§?\w[\w.]*)\b")
 
 
+@traced("guardrail")
 def guardrail_node(state: ScanState) -> dict:
     policy_md = state.get("policy_markdown") or ""
     jurisdiction = state.get("jurisdiction", "DPDP")
@@ -47,3 +49,4 @@ def guardrail_node(state: ScanState) -> dict:
             "guardrail_violations": [str(exc)],
             "step_log": [{"agent": "guardrail", "status": "error", "message": str(exc)}],
         }
+
