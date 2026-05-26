@@ -1,4 +1,4 @@
-﻿import { Command } from "commander";
+import { Command } from "commander";
 import { render } from "ink";
 import React from "react";
 import { ScanUI } from "./scan-ui.js";

@@ -1,4 +1,4 @@
-﻿{
+{
   "name": "@shipcomply/cli",
   "version": "0.0.0",
   "description": "ShipComply CLI — scan repos for DPDP/GDPR compliance",

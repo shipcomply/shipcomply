@@ -1,4 +1,4 @@
-﻿// API route — stores user PII to DB (ORM sink)
+// API route — stores user PII to DB (ORM sink)
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest) {

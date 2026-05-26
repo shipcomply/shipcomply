@@ -1,4 +1,4 @@
-﻿services:
+services:
   # FastAPI Backend
   - type: web
     name: shipcomply-api

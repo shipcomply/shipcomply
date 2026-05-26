@@ -1,4 +1,4 @@
-﻿export function AddressForm() {
+export function AddressForm() {
   return (
     <form>
       <input type="text" name="address" />

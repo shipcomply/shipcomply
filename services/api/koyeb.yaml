@@ -1,4 +1,4 @@
-﻿name: shipcomply-api
+name: shipcomply-api
 type: web
 git:
   url: https://github.com/shipcomply/shipcomply

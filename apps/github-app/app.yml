@@ -1,4 +1,4 @@
-﻿id: shipcomply-app
+id: shipcomply-app
 name: ShipComply
 description: "Automated DPDP/GDPR compliance scanning for pull requests"
 url: https://shipcomply.dev

@@ -1,4 +1,4 @@
-﻿// Monorepo sample: scanner must detect Next.js inside apps/web/
+// Monorepo sample: scanner must detect Next.js inside apps/web/
 export default function MonorepoSignup() {
   return (
     <form>

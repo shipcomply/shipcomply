@@ -1,4 +1,4 @@
-﻿export function NameForm() {
+export function NameForm() {
   return (
     <form>
       <input type="text" name="firstName" />

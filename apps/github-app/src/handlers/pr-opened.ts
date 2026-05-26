@@ -1,4 +1,4 @@
-﻿import type { Context } from "probot";
+import type { Context } from "probot";
 
 const API_URL = process.env.API_URL ?? "https://api.shipcomply.dev";
 

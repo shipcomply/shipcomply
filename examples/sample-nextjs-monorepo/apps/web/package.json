@@ -1,4 +1,4 @@
-﻿{
+{
   "name": "monorepo-web",
   "private": true,
   "scripts": { "dev": "next dev" },

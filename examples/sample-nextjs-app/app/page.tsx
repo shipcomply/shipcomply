@@ -1,4 +1,4 @@
-﻿// Sample Next.js app — intentional PII collection for scanner smoke test
+// Sample Next.js app — intentional PII collection for scanner smoke test
 // Scanner MUST detect: email, name, phone, address, dob (>=5 types)
 
 export default function SignUpPage() {

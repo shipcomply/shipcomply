@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 import { use, useEffect, useState } from "react";
 import { useAuth } from "@clerk/nextjs";
 import { motion, AnimatePresence } from "framer-motion";

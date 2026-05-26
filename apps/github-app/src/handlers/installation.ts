@@ -1,4 +1,4 @@
-﻿import type { Context } from "probot";
+import type { Context } from "probot";
 
 export async function handleInstallation(context: Context<"installation.created">) {
   const { payload, log } = context;

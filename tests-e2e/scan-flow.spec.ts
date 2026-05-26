@@ -1,4 +1,4 @@
-﻿import { test, expect } from "@playwright/test";
+import { test, expect } from "@playwright/test";
 
 test("scan flow: dashboard navigates to new scan", async ({ page }) => {
   await page.goto("/dashboard");

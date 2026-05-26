@@ -1,4 +1,4 @@
-﻿// Negative fixture: must NOT trigger the "email" detection rule
+// Negative fixture: must NOT trigger the "email" detection rule
 // because this is a test file (*.test.tsx)
 
 describe("EmailForm", () => {

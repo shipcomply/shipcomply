@@ -1,4 +1,4 @@
-﻿import { Command } from "commander";
+import { Command } from "commander";
 import { scanCommand } from "./commands/scan.js";
 
 const program = new Command();

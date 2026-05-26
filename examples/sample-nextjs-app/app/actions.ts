@@ -1,4 +1,4 @@
-﻿// Server action — scanner should detect 'use server' + PII params
+// Server action — scanner should detect 'use server' + PII params
 "use server";
 
 export async function createUser(data: {

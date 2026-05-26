@@ -1,4 +1,4 @@
-﻿import { Probot } from "probot";
+import { Probot } from "probot";
 import { handlePullRequest } from "./handlers/pr-opened.js";
 import { handleInstallation } from "./handlers/installation.js";
 

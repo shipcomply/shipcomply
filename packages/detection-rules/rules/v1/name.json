@@ -1,4 +1,4 @@
-﻿{
+{
   "$schema": "https://shipcomply.dev/schemas/detection-rule.json",
   "version": "1", "id": "name", "name": "Personal name collection",
   "jurisdiction": ["DPDP", "GDPR"],

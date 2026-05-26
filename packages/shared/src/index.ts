@@ -1,1 +1,1 @@
-﻿export * from "./schemas/scan.js";
+export * from "./schemas/scan.js";

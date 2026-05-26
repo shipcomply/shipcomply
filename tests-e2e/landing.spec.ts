@@ -1,4 +1,4 @@
-﻿import { test, expect } from "@playwright/test";
+import { test, expect } from "@playwright/test";
 
 test("landing page loads and shows CTA", async ({ page }) => {
   await page.goto("/");

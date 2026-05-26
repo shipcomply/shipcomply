@@ -1,4 +1,4 @@
-﻿// Positive fixture: should trigger the "email" detection rule
+// Positive fixture: should trigger the "email" detection rule
 // This file must NOT be in a test/ directory or have .test. in the name
 
 export function EmailForm() {
