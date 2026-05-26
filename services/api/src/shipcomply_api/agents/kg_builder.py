@@ -1,26 +1,61 @@
-﻿"""KGBuilder agent — builds scan knowledge graph + links elements to DPDP KG."""
+﻿"""KGBuilder agent — builds scan knowledge graph from state data_elements."""
 from __future__ import annotations
 
-import json
 import logging
+from dataclasses import dataclass, field as dc_field
 
 from .state import ScanState
 
 log = logging.getLogger(__name__)
 
 
+@dataclass
+class _Src:
+    file: str
+    line: object = None
+    pattern: object = None
+    detection_type: str = "pattern"
+
+
+@dataclass
+class _El:
+    element_type: str
+    field_name: str = ""
+    sources: list = dc_field(default_factory=list)
+    sinks: list = dc_field(default_factory=list)
+    compliance_flags: list = dc_field(default_factory=list)
+
+
+@dataclass
+class _Scan:
+    scan_id: str
+    data_elements: list
+    files_scanned: int = 0
+    errors: list = dc_field(default_factory=list)
+
+
+def _rebuild_scan(state: ScanState) -> _Scan:
+    elements = []
+    for el in state.get("data_elements", []):
+        sources = [_Src(**{k: v for k, v in s.items() if k in ("file","line","pattern","detection_type")}) for s in el.get("sources", [])]
+        elements.append(_El(
+            element_type=el["element_type"],
+            field_name=el.get("field_name", ""),
+            compliance_flags=el.get("compliance_flags", []),
+            sources=sources,
+        ))
+    return _Scan(scan_id=state["scan_id"], data_elements=elements, files_scanned=state.get("files_scanned", 0))
+
+
 def kg_builder_node(state: ScanState) -> dict:
     if state.get("final_status") == "failed":
         return {"kg_dict": None, "step_log": [{"agent": "kg_builder", "status": "skipped", "message": "upstream failed"}]}
 
-    repo_path = state.get("repo_path", "")
     scan_id = state["scan_id"]
     try:
-        from shipcomply_api.scanner import scan_repo
         from shipcomply_api.scanner.knowledge_graph import build_graph
-
-        result = scan_repo(repo_path)
-        graph = build_graph(result)
+        mock = _rebuild_scan(state)
+        graph = build_graph(mock)
         kg_dict = graph.to_dict()
 
         return {

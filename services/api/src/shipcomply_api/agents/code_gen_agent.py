@@ -2,10 +2,28 @@
 from __future__ import annotations
 
 import logging
+from dataclasses import dataclass, field
 
 from .state import ScanState
 
 log = logging.getLogger(__name__)
+
+
+@dataclass
+class _MinimalElement:
+    element_type: str
+    field_name: str = ""
+    sources: list = field(default_factory=list)
+    sinks: list = field(default_factory=list)
+    compliance_flags: list = field(default_factory=list)
+
+
+@dataclass
+class _MinimalScan:
+    scan_id: str
+    data_elements: list
+    files_scanned: int = 0
+    errors: list = field(default_factory=list)
 
 
 def code_gen_node(state: ScanState) -> dict:
@@ -17,12 +35,19 @@ def code_gen_node(state: ScanState) -> dict:
 
     try:
         from shipcomply_api.code_gen import CodeGenerator
-        from shipcomply_api.llm import llm_client
 
-        gen = CodeGenerator(llm_client=llm_client)
-        element_types = [el["element_type"] for el in data_elements]
-        files = gen.generate(element_types, scan_id=scan_id)
-        code_files = [{"name": f.name, "content": f.content} for f in files]
+        elements = [
+            _MinimalElement(
+                element_type=el["element_type"],
+                field_name=el.get("field_name", ""),
+                compliance_flags=el.get("compliance_flags", []),
+            )
+            for el in data_elements
+        ]
+        mock_scan = _MinimalScan(scan_id=scan_id, data_elements=elements)
+
+        result = CodeGenerator().generate(mock_scan)
+        code_files = [{"name": f.filename, "content": f.content} for f in result.files]
 
         return {
             "code_files": code_files,
