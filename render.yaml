@@ -31,7 +31,7 @@ services:
   - type: web
     name: shipcomply-web
     runtime: node
-    buildCommand: cd apps/web && npm install && npm run build
+    buildCommand: cd apps/web && npm install --include=dev && npm run build
     startCommand: cd apps/web && npm start
     plan: free
     envVars:
