@@ -42,6 +42,45 @@ FLAG_DESCRIPTIONS: dict[str, str] = {
     "PCI_DSS":    "PCI DSS — Payment card data must be encrypted; scope reduction recommended",
 }
 
+_DPDP_CHECKLIST: list[dict] = [
+    {
+        "section": "§4",
+        "title": "Grounds for processing",
+        "action": "Document and display lawful basis (consent or legitimate use) for each PII category at the point of collection",
+        "triggers": {"email", "phone", "name", "date_of_birth", "biometric", "financial", "health", "government_id", "location", "password", "aadhaar", "pan", "ssn", "payment", "analytics"},
+    },
+    {
+        "section": "§6",
+        "title": "Consent",
+        "action": "Implement explicit opt-in consent before collecting; maintain timestamped consent records; provide a clear withdrawal mechanism",
+        "triggers": {"email", "phone", "name", "location"},
+    },
+    {
+        "section": "§7",
+        "title": "Notice to data principal",
+        "action": "Display notice at collection point: data fiduciary identity, processing purpose, retention period, and right to withdraw consent",
+        "triggers": {"email", "phone", "name", "location"},
+    },
+    {
+        "section": "§8",
+        "title": "Security obligations (sensitive data)",
+        "action": "Encrypt at rest and in transit; restrict access to minimum necessary; conduct Data Protection Impact Assessment (DPIA)",
+        "triggers": {"financial", "health", "biometric", "government_id", "password", "aadhaar", "pan", "ssn", "payment"},
+    },
+    {
+        "section": "§9",
+        "title": "Processing of children's data",
+        "action": "Implement age verification; obtain verifiable parental/guardian consent before processing data of users under 18",
+        "triggers": {"date_of_birth"},
+    },
+    {
+        "section": "§11",
+        "title": "Rights of the data principal",
+        "action": "Implement: data access/export endpoint, correction endpoint, erasure (right to be forgotten) endpoint, and grievance redressal mechanism",
+        "triggers": {"biometric", "government_id", "password", "aadhaar"},
+    },
+]
+
 REMEDIATION_ADVICE: dict[str, str] = {
     "email":     "Add a clear notice explaining why you collect email addresses. Implement opt-in consent and provide an unsubscribe mechanism.",
     "phone":     "Display the purpose of phone number collection at the point of input. Allow users to opt out of non-essential communications.",
@@ -74,6 +113,7 @@ class AuditReport:
     files_scanned: int
     elements_found: int
     findings: list[ComplianceFinding] = field(default_factory=list)
+    dpdp_checklist: list[dict] = field(default_factory=list)
     generated_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
     def to_dict(self) -> dict:
@@ -128,6 +168,15 @@ class AuditReport:
                 "Score is not applicable — a zero-PII repo does not automatically pass compliance.",
                 "",
             ]
+
+        if self.dpdp_checklist:
+            lines += ["## DPDP Act 2023 — Compliance Checklist", ""]
+            lines.append("Actions required based on detected data elements:\n")
+            for item in self.dpdp_checklist:
+                triggered = ", ".join(sorted(item.get("triggered_by", [])))
+                lines.append(f"- [ ] **{item['section']} — {item['title']}** *(detected: {triggered})*")
+                lines.append(f"  {item['action']}")
+                lines.append("")
 
         if self.findings:
             lines += ["## Findings", ""]
@@ -185,6 +234,7 @@ class AuditAgent:
         findings = self._build_findings(scan)
         deductions = sum(SEVERITY_DEDUCTIONS.get(f.severity, 0) for f in findings)
         score = max(0, 100 - deductions)
+        element_types = [el.element_type for el in scan.data_elements]
 
         report = AuditReport(
             scan_id=scan.scan_id,
@@ -193,12 +243,27 @@ class AuditAgent:
             files_scanned=scan.files_scanned,
             elements_found=len(scan.data_elements),
             findings=findings,
+            dpdp_checklist=self._build_dpdp_checklist(element_types),
         )
         log.info(
             "audit scan_id=%s score=%s findings=%d",
             scan.scan_id, score, len(findings),
         )
         return report
+
+    def _build_dpdp_checklist(self, element_types: list[str]) -> list[dict]:
+        detected = set(element_types)
+        result = []
+        for item in _DPDP_CHECKLIST:
+            triggered_by = detected & item["triggers"]
+            if triggered_by:
+                result.append({
+                    "section": item["section"],
+                    "title": item["title"],
+                    "action": item["action"],
+                    "triggered_by": sorted(triggered_by),
+                })
+        return result
 
     def _build_findings(self, scan) -> list[ComplianceFinding]:
         findings = []

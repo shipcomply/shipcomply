@@ -14,11 +14,15 @@ Guardrails applied on every call:
 """
 from __future__ import annotations
 
+import asyncio
 import logging
 import time
 from collections import defaultdict
+from datetime import datetime, timezone, timedelta
 from enum import Enum
 from typing import Any
+
+from sqlalchemy import select
 
 from shipcomply_api.config import settings
 from shipcomply_api.llm.guardrails import BudgetGuard, ProviderBudgetExceeded
@@ -118,6 +122,42 @@ class LLMClient:
             id(self._kimi): "kimi",
         }
 
+    async def _db_cache_get(self, cache_key: str) -> str | None:
+        try:
+            from shipcomply_api.db.session import AsyncSessionLocal
+            from shipcomply_api.db.models import LLMCache
+            async with AsyncSessionLocal() as db:
+                row = await db.scalar(
+                    select(LLMCache).where(
+                        LLMCache.cache_key == cache_key,
+                        LLMCache.expires_at > datetime.now(timezone.utc),
+                    )
+                )
+                if row:
+                    log.debug("LLM DB cache hit: %s", cache_key[:12])
+                    return row.response_text
+        except Exception as exc:
+            log.debug("DB cache read skipped: %s", exc)
+        return None
+
+    async def _db_cache_set(self, cache_key: str, value: str, task: str, provider_name: str) -> None:
+        try:
+            from shipcomply_api.db.session import AsyncSessionLocal
+            from shipcomply_api.db.models import LLMCache
+            async with AsyncSessionLocal() as db:
+                existing = await db.scalar(select(LLMCache).where(LLMCache.cache_key == cache_key))
+                if not existing:
+                    db.add(LLMCache(
+                        cache_key=cache_key,
+                        provider=provider_name,
+                        model=task,
+                        response_text=value,
+                        expires_at=datetime.now(timezone.utc) + timedelta(hours=24),
+                    ))
+                    await db.commit()
+        except Exception as exc:
+            log.debug("DB cache write skipped: %s", exc)
+
     async def complete(
         self, task: TaskType, system: str, user: str, schema: dict[str, Any] | None = None
     ) -> str:
@@ -125,7 +165,13 @@ class LLMClient:
             return await self._ollama.chat(system, user)
 
         cache_key = self._guard.cache.key(task, system, user)
+        # L1: in-memory
         cached = self._guard.cache.get(cache_key)
+        if cached is None:
+            # L2: Neon DB (survives restarts)
+            cached = await self._db_cache_get(cache_key)
+            if cached is not None:
+                self._guard.cache.set(cache_key, cached)
         if cached is not None:
             return cached
 
@@ -146,6 +192,7 @@ class LLMClient:
                 result = await provider.chat(system, user, schema=schema)
                 self._circuit.record_success(provider_name)
                 self._guard.cache.set(cache_key, result)
+                asyncio.create_task(self._db_cache_set(cache_key, result, str(task), provider_name))
                 return result
             except ProviderBudgetExceeded as e:
                 log.warning("Budget exceeded for %s: %s", provider_name, e)

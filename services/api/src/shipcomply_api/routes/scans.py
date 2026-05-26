@@ -16,7 +16,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from shipcomply_api.auth.deps import CurrentUser, get_current_user
 from shipcomply_api.db.session import get_db
-from shipcomply_api.db.models import Scan, DataElement as DataElementRow, Finding as FindingRow, Org
+from shipcomply_api.db.models import Scan, DataElement as DataElementRow, Finding as FindingRow, AgentRun, Org
 from shipcomply_api.middleware.rate_limit import check_anon_ip_rate, check_org_daily_quota
 from shipcomply_api.storage.r2 import r2_client
 
@@ -154,6 +154,16 @@ async def _run_scan_pipeline(scan_id: str, repo_url: str, branch: str, jurisdict
                     sources=el.get("sources", []),
                 ))
 
+            # Persist AgentRun rows from step_log
+            for step in final.get("step_log", []):
+                step_status = step.get("status", "unknown")
+                db.add(AgentRun(
+                    scan_id=scan_id,
+                    agent_name=step.get("agent", "unknown"),
+                    status="completed" if step_status == "ok" else ("skipped" if step_status == "skipped" else "failed"),
+                    error=step.get("message") if step_status not in ("ok", "skipped") else None,
+                ))
+
             # Persist Finding rows
             for f in final.get("findings", []):
                 db.add(FindingRow(
@@ -176,6 +186,7 @@ async def _run_scan_pipeline(scan_id: str, repo_url: str, branch: str, jurisdict
                     policy_r2_key=policy_key,
                     audit_r2_key=audit_key,
                     kg_r2_key=kg_key,
+                    code_r2_key=code_key,
                     completed_at=datetime.now(timezone.utc),
                 )
             )
