@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 
 export default async function DashboardPage() {
-  const { userId } = auth();
+  const { userId } = await auth();
   return (
     <div className="space-y-8">
       <div className="flex items-center justify-between">
