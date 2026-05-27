@@ -74,6 +74,31 @@ services:
       - key: LANGFUSE_SECRET_KEY
         sync: false
 
+  # GitHub App
+  - type: web
+    name: shipcomply-github-app
+    runtime: node
+    buildCommand: cd apps/github-app && npm install && npm run build
+    startCommand: cd apps/github-app && npm start
+    plan: free
+    envVars:
+      - key: NODE_VERSION
+        value: "20.19.0"
+      - key: NODE_ENV
+        value: production
+      - key: APP_ID
+        sync: false
+      - key: PRIVATE_KEY
+        sync: false
+      - key: WEBHOOK_SECRET
+        sync: false
+      - key: GITHUB_CLIENT_ID
+        sync: false
+      - key: GITHUB_CLIENT_SECRET
+        sync: false
+      - key: API_URL
+        value: https://shipcomply-api.onrender.com
+
   # Next.js Frontend
   - type: web
     name: shipcomply-web
