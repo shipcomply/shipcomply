@@ -1,6 +1,6 @@
 import { Probot } from "probot";
-import { handlePullRequest } from "./handlers/pr-opened.js";
-import { handleInstallation } from "./handlers/installation.js";
+import { handlePullRequest } from "./handlers/pr-opened";
+import { handleInstallation } from "./handlers/installation";
 
 export default (app: Probot) => {
   app.on("pull_request.opened", handlePullRequest);
