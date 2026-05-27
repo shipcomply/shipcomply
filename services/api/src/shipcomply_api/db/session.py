@@ -20,9 +20,16 @@ def _asyncpg_engine_args(raw: str) -> tuple[str, dict]:
     m = re.search(r"[?&]sslmode=([^&]*)", url)
     if m:
         sslmode = m.group(1)
-        url = re.sub(r"[?&]sslmode=[^&]*", "", url).rstrip("?&")
+        url = re.sub(r"[?&]sslmode=[^&]*", "", url)
         if sslmode in ("require", "verify-ca", "verify-full"):
             connect_args["ssl"] = True
+
+    # Strip params asyncpg doesn't understand
+    url = re.sub(r"[?&]channel_binding=[^&]*", "", url)
+    url = re.sub(r"[?&]ssl=[^&]*", "", url)
+    # Clean up mangled query string boundary left by removals
+    url = re.sub(r"\?&+", "?", url)
+    url = url.rstrip("?&")
 
     return url, connect_args
 
