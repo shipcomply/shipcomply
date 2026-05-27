@@ -5,20 +5,19 @@ import { API_BASE } from "@/lib/api";
 
 export function ApiWarmup() {
   const [show, setShow] = useState(false);
-  const [warmedUp, setWarmedUp] = useState(false);
 
   useEffect(() => {
-    let dismissed = false;
+    let cancelled = false;
     const timer = setTimeout(() => {
-      if (!warmedUp && !dismissed) setShow(true);
+      if (!cancelled) setShow(true);
     }, 5000);
 
     fetch(`${API_BASE}/healthz`)
-      .then((r) => { if (r.ok) { setWarmedUp(true); setShow(false); } })
-      .catch(() => { if (!dismissed) setShow(true); });
+      .then((r) => { if (!cancelled && r.ok) setShow(false); })
+      .catch(() => { if (!cancelled) setShow(true); });
 
-    return () => { dismissed = true; clearTimeout(timer); };
-  }, [warmedUp]);
+    return () => { cancelled = true; clearTimeout(timer); };
+  }, []);
 
   if (!show) return null;
 

@@ -83,6 +83,7 @@ export default function ScanPage({ params }: { params: Promise<{ id: string }> }
   const [error, setError] = useState("");
   const [downloading, setDownloading] = useState<string | null>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const readerRef = useRef<ReadableStreamDefaultReader<Uint8Array> | null>(null);
 
   async function handleDownload(type: "policy" | "audit") {
     if (downloading) return;
@@ -128,6 +129,7 @@ export default function ScanPage({ params }: { params: Promise<{ id: string }> }
 
         if (res.ok && res.body) {
           const reader = res.body.getReader();
+          readerRef.current = reader;
           const decoder = new TextDecoder();
           let buffer = "";
 
@@ -190,8 +192,12 @@ export default function ScanPage({ params }: { params: Promise<{ id: string }> }
     return () => {
       cancelled = true;
       if (intervalRef.current) clearInterval(intervalRef.current);
+      readerRef.current?.cancel().catch(() => {});
+      readerRef.current = null;
     };
-  }, [id, getToken]);
+  // getToken is stable per Clerk guarantees — id is the only meaningful dep
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]);
 
   const score = Number.isFinite(audit?.score) ? audit!.score : 0;
   const findings = audit?.findings ?? [];

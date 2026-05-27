@@ -1,6 +1,6 @@
 import type { Context } from "probot";
 
-const API_URL = process.env.API_URL ?? "https://api.shipcomply.dev";
+const API_URL = process.env.API_URL ?? "https://shipcomply-api.onrender.com";
 
 interface ScanResponse {
   scan_id: string;
