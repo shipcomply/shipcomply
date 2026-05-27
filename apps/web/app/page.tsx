@@ -3,6 +3,17 @@ import { Nav } from "@/components/marketing/nav";
 import { Footer } from "@/components/marketing/footer";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Shield, MapPin, Zap, Network, ShieldCheck, FileText } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
+
+const ICON_MAP: Record<string, LucideIcon> = {
+  shield: Shield,
+  pin: MapPin,
+  bolt: Zap,
+  graph: Network,
+  guard: ShieldCheck,
+  doc: FileText,
+};
 
 const HOW_IT_WORKS = [
   { step: "01", title: "Connect your repo", desc: "Paste a GitHub URL or connect via our GitHub App. We never store your source code — only structured metadata." },
@@ -11,12 +22,12 @@ const HOW_IT_WORKS = [
 ];
 
 const FEATURES = [
-  { title: "DPDP Act 2023 native", desc: "Built for India's data protection law. Every generated artifact maps to specific DPDP sections.", icon: "shield" },
-  { title: "File:line citations", desc: "Not generic boilerplate. Your policy points to the exact code that collects each data element.", icon: "pin" },
-  { title: "Working code output", desc: "Consent banner and API routes are copy-paste-ready TypeScript — not pseudocode.", icon: "bolt" },
-  { title: "Knowledge graph", desc: "Interactive graph showing which PII flows trigger which obligations under which regulations.", icon: "graph" },
-  { title: "LLM-powered guardrails", desc: "Every citation validated against DPDP knowledge graph. No hallucinated section references.", icon: "guard" },
-  { title: "Audit PDF", desc: "Downloadable audit report with severity scoring, findings, remediation steps.", icon: "doc" },
+  { title: "DPDP Act 2023 native", desc: "Built for India's data protection law. Every generated artifact maps to specific DPDP sections.", icon: "shield", span: "md:col-span-2" },
+  { title: "File:line citations", desc: "Not generic boilerplate. Your policy points to the exact code that collects each data element.", icon: "pin", span: "" },
+  { title: "Working code output", desc: "Consent banner and API routes are copy-paste-ready TypeScript — not pseudocode.", icon: "bolt", span: "" },
+  { title: "Knowledge graph", desc: "Interactive graph showing which PII flows trigger which obligations under which regulations.", icon: "graph", span: "" },
+  { title: "LLM-powered guardrails", desc: "Every citation validated against DPDP knowledge graph. No hallucinated section references.", icon: "guard", span: "" },
+  { title: "Audit PDF", desc: "Downloadable audit report with severity scoring, findings, remediation steps.", icon: "doc", span: "", download: true },
 ];
 
 const STATS = [
@@ -46,13 +57,13 @@ export default function LandingPage() {
             ShipComply scans your source code, detects every PII data flow via AST analysis, and generates a privacy policy with file:line citations, working consent banner, deletion endpoints, and audit PDF automatically.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-16">
-            <Link href="/sign-up"><Button size="lg">Get started free</Button></Link>
-            <Link href="/dashboard"><Button variant="secondary" size="lg">Try demo scan</Button></Link>
+            <Link href="/signup"><Button size="lg">Get started free</Button></Link>
+            <Link href="/signup?redirect_url=/dashboard"><Button variant="secondary" size="lg">Try demo scan</Button></Link>
           </div>
-          <div className="grid grid-cols-3 gap-4 max-w-lg mx-auto">
+          <div className="grid grid-cols-3 gap-4 max-w-2xl mx-auto">
             {STATS.map((s) => (
               <div key={s.label} className="text-center">
-                <div className="text-2xl font-bold text-mint-9 mb-1">{s.value}</div>
+                <div className={`font-bold text-mint-9 mb-1 ${s.value.length >= 12 ? "text-base" : "text-2xl"}`}>{s.value}</div>
                 <div className="text-xs text-bg-7">{s.label}</div>
               </div>
             ))}
@@ -67,7 +78,7 @@ export default function LandingPage() {
           <div className="grid md:grid-cols-3 gap-6">
             {HOW_IT_WORKS.map((s) => (
               <div key={s.step} className="bg-bg-2 border border-bg-5 rounded-xl p-6">
-                <div className="text-4xl font-bold text-bg-5 font-mono mb-4">{s.step}</div>
+                <div className="text-4xl font-bold text-mint-9/30 font-mono mb-4">{s.step}</div>
                 <h3 className="text-lg font-semibold text-bg-11 mb-2">{s.title}</h3>
                 <p className="text-sm text-bg-8 leading-relaxed">{s.desc}</p>
               </div>
@@ -81,12 +92,21 @@ export default function LandingPage() {
           <h2 className="text-3xl font-bold text-bg-11 mb-3 text-center">Everything you need to ship compliant</h2>
           <p className="text-bg-8 text-center mb-12 max-w-xl mx-auto">No lawyers required for your first draft.</p>
           <div className="grid md:grid-cols-3 gap-4">
-            {FEATURES.map((f) => (
-              <div key={f.title} className="bg-bg-2 border border-bg-5 rounded-xl p-5 hover:border-bg-6 transition-colors">
-                <h3 className="text-base font-semibold text-bg-11 mb-1.5">{f.title}</h3>
-                <p className="text-sm text-bg-8 leading-relaxed">{f.desc}</p>
-              </div>
-            ))}
+            {FEATURES.map((f) => {
+              const Icon = ICON_MAP[f.icon];
+              return (
+                <div key={f.title} className={`bg-bg-2 border border-bg-5 rounded-xl p-5 hover:border-bg-6 transition-colors flex flex-col ${f.span ?? ""}`}>
+                  {Icon && <Icon size={18} className="text-mint-9 mb-3 flex-shrink-0" />}
+                  <h3 className={`font-semibold text-bg-11 mb-1.5 ${f.span ? "text-lg" : "text-base"}`}>{f.title}</h3>
+                  <p className="text-sm text-bg-8 leading-relaxed flex-1">{f.desc}</p>
+                  {f.download && (
+                    <Link href="/signup" className="mt-3 text-xs text-mint-9 hover:text-mint-11 transition-colors">
+                      Download sample report →
+                    </Link>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
       </section>
@@ -107,8 +127,7 @@ export default function LandingPage() {
         <div className="max-w-2xl mx-auto text-center">
           <h2 className="text-3xl font-bold text-bg-11 mb-4">Ready to ship compliant?</h2>
           <p className="text-bg-8 mb-8">Scan your first repo free. No credit card required.</p>
-          <Link href="/sign-up"><Button size="lg" className="shadow-glow-md">Get started free</Button></Link>
-          <p className="mt-4 text-xs text-bg-7">AI-GENERATED DRAFT — REVIEW BY QUALIFIED ATTORNEY BEFORE PUBLISHING</p>
+          <Link href="/signup"><Button size="lg" className="shadow-glow-md">Get started free</Button></Link>
         </div>
       </section>
 

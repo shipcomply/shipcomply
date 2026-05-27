@@ -1,6 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Check } from "lucide-react";
 
 const PLANS = [
   {
@@ -49,7 +50,15 @@ export default function BillingPage() {
             <span className="text-sm font-mono font-medium text-bg-11">0 / 3</span>
           </div>
           <div className="h-2 bg-bg-3 rounded-full overflow-hidden">
-            <div className="h-full bg-mint-9 rounded-full" style={{ width: "0%" }} />
+            <div
+              role="progressbar"
+              aria-valuenow={0}
+              aria-valuemin={0}
+              aria-valuemax={3}
+              aria-label="Scans used"
+              className="h-full bg-mint-9 rounded-full"
+              style={{ width: "0%" }}
+            />
           </div>
           <p className="text-xs text-bg-6">Free tier: 3 scans per month. Upgrade for more.</p>
         </CardContent>
@@ -60,13 +69,10 @@ export default function BillingPage() {
         <h2 className="text-lg font-semibold text-bg-11 mb-4">Plans</h2>
         <div className="grid md:grid-cols-3 gap-4">
           {PLANS.map((plan) => (
-            <div
+            <Card
               key={plan.name}
-              className={`rounded-xl border p-5 flex flex-col gap-4 ${
-                plan.current
-                  ? "border-mint-9/50 bg-mint-9/5"
-                  : "border-bg-5 bg-bg-2"
-              }`}
+              variant="bordered"
+              className={`flex flex-col gap-4 p-5 ${plan.current ? "border-mint-9/50 bg-mint-9/5" : ""}`}
             >
               <div>
                 <div className="flex items-center gap-2 mb-1">
@@ -81,7 +87,7 @@ export default function BillingPage() {
               <ul className="space-y-1.5 flex-1">
                 {plan.features.map((f) => (
                   <li key={f} className="text-sm text-bg-8 flex items-center gap-2">
-                    <span className="text-mint-9 text-xs">✓</span>
+                    <Check size={14} className="text-mint-9 flex-shrink-0" />
                     {f}
                   </li>
                 ))}
@@ -93,7 +99,7 @@ export default function BillingPage() {
               >
                 {plan.cta}
               </Button>
-            </div>
+            </Card>
           ))}
         </div>
       </div>

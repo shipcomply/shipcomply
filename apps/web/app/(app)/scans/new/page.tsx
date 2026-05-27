@@ -122,11 +122,7 @@ function NewScanForm() {
               onChange={(e) => { setRepoUrl(e.target.value); if (urlError) validateUrl(e.target.value); }}
               onBlur={() => repoUrl && validateUrl(repoUrl)}
               error={urlError}
-              aria-describedby={urlError ? "url-error" : undefined}
             />
-            {urlError && (
-              <p id="url-error" className="text-xs text-danger mt-1">{urlError}</p>
-            )}
           </div>
 
           {/* Jurisdiction */}

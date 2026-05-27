@@ -6,8 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Copy, Check } from "lucide-react";
 
+import { GITHUB_APP_URL } from "@/lib/constants";
+
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "https://shipcomply-api.onrender.com";
-const GITHUB_APP_URL = "https://github.com/apps/shipcomply/installations/new";
 
 function CopyButton({ text }: { text: string }) {
   const [copied, setCopied] = useState(false);

@@ -64,7 +64,14 @@ export default function KnowledgePage() {
         initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5, delay: 0.1 }}
         className="rounded-xl border border-bg-4 bg-bg-1 overflow-hidden"
       >
-        <svg width="100%" viewBox={`0 0 ${svgW} ${svgH}`} className="block">
+        <svg
+          width="100%"
+          viewBox={`0 0 ${svgW} ${svgH}`}
+          className="block"
+          role="application"
+          aria-label="DPDP Act 2023 knowledge graph — clickable nodes for regulation sections, data elements, and legal bases"
+        >
+          <title>DPDP Act 2023 Knowledge Graph</title>
           <defs>
             <marker id="arrow" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
               <path d="M0,0 L0,6 L6,3 z" fill="#3c3c4e" />
@@ -90,10 +97,15 @@ export default function KnowledgePage() {
             const isHovered = hovered === node.id;
             return (
               <motion.g key={node.id} style={{ cursor: "pointer" }}
+                role="button"
+                tabIndex={0}
+                aria-label={node.label}
+                aria-pressed={isSelected}
                 initial={{ opacity: 0, scale: 0.5 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: i * 0.04, duration: 0.25, type: "spring", stiffness: 260, damping: 20 }}
                 onClick={() => setSelected(isSelected ? null : node)}
+                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setSelected(isSelected ? null : node); } }}
                 onMouseEnter={() => setHovered(node.id)}
                 onMouseLeave={() => setHovered(null)}
               >

@@ -1,9 +1,6 @@
-"use client";
 import Link from "next/link";
 
-const FOOTER_LINKS = [
-  { group: "Compliance", links: [{ label: "DPDP Act 2023", href: "/knowledge?j=DPDP" }, { label: "GDPR", href: "/knowledge?j=GDPR" }, { label: "CCPA", href: "/knowledge?j=CCPA" }] },
-];
+const COMPLIANCE_LABELS = ["DPDP Act 2023", "GDPR", "CCPA / CPRA"];
 
 export function Footer() {
   return (
@@ -16,18 +13,21 @@ export function Footer() {
               Code-aware DPDP/GDPR compliance engine. Scan any repo. Ship compliant.
             </p>
           </div>
-          {FOOTER_LINKS.map((g) => (
-            <div key={g.group}>
-              <h4 className="text-xs font-semibold uppercase tracking-widest text-bg-7 mb-3">{g.group}</h4>
-              <ul className="space-y-2">
-                {g.links.map((l) => (
-                  <li key={l.label}>
-                    <Link href={l.href} className="text-sm text-bg-9 hover:text-bg-11 transition-colors duration-fast">{l.label}</Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
+          <div>
+            <h4 className="text-xs font-semibold uppercase tracking-widest text-bg-7 mb-3">Compliance</h4>
+            <ul className="space-y-2">
+              {COMPLIANCE_LABELS.map((label) => (
+                <li key={label} className="text-sm text-bg-7">{label}</li>
+              ))}
+            </ul>
+          </div>
+          <div>
+            <h4 className="text-xs font-semibold uppercase tracking-widest text-bg-7 mb-3">Product</h4>
+            <ul className="space-y-2">
+              <li><Link href="/signup" className="text-sm text-bg-9 hover:text-bg-11 transition-colors duration-fast">Get started free</Link></li>
+              <li><Link href="/login" className="text-sm text-bg-9 hover:text-bg-11 transition-colors duration-fast">Sign in</Link></li>
+            </ul>
+          </div>
         </div>
         <div className="mt-12 pt-6 border-t border-bg-4 flex flex-col md:flex-row items-center justify-between gap-4">
           <p className="text-xs text-bg-7">© {new Date().getFullYear()} ShipComply. All rights reserved.</p>
