@@ -13,15 +13,13 @@ export function Nav() {
           <span className="text-bg-7 text-xs px-1.5 py-0.5 rounded border border-bg-5">beta</span>
         </Link>
         <nav className="hidden md:flex items-center gap-6 text-sm text-bg-9">
-          <Link href="/pricing" className="hover:text-bg-11 transition-colors duration-fast">Pricing</Link>
-          <Link href="/security" className="hover:text-bg-11 transition-colors duration-fast">Security</Link>
           <a href="https://docs.shipcomply.dev" className="hover:text-bg-11 transition-colors duration-fast" target="_blank" rel="noopener">Docs</a>
         </nav>
         <div className="flex items-center gap-3">
-          <Link href="/sign-in">
+          <Link href="/login">
             <Button variant="ghost" size="sm">Sign in</Button>
           </Link>
-          <Link href="/sign-up">
+          <Link href="/signup">
             <Button size="sm">Get started free</Button>
           </Link>
         </div>

@@ -2,9 +2,11 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@clerk/nextjs";
 import Link from "next/link";
+import { AlertCircle, Rocket } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { api } from "@/lib/api";
 
 interface ScanRow {
@@ -15,47 +17,47 @@ interface ScanRow {
   compliance_score: number | null;
   files_scanned: number | null;
   started_at: string | null;
-  completed_at: string | null;
 }
 
-function scoreVariant(score: number | null): "success" | "warning" | "danger" | "default" {
-  if (score === null) return "default";
-  if (score >= 80) return "success";
-  if (score >= 50) return "warning";
-  return "danger";
-}
+const EXAMPLE_REPOS = [
+  { label: "vercel/next.js",    url: "https://github.com/vercel/next.js" },
+  { label: "supabase/supabase", url: "https://github.com/supabase/supabase" },
+  { label: "calcom/cal.com",    url: "https://github.com/calcom/cal.com" },
+];
 
 export default function DashboardPage() {
   const { getToken } = useAuth();
   const [scans, setScans] = useState<ScanRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [apiError, setApiError] = useState("");
+  const [corpusEmpty, setCorpusEmpty] = useState(false);
 
   useEffect(() => {
     (async () => {
       try {
         const token = await getToken();
-        const data = await api.scan.list(token ?? "") as ScanRow[];
-        setScans(data);
-      } catch {
-        // API unreachable on first load — show empty state
+        const [data, corpus] = await Promise.allSettled([
+          api.scan.list(token ?? "") as Promise<ScanRow[]>,
+          api.corpus.status(),
+        ]);
+        if (data.status === "fulfilled") setScans(data.value);
+        else setApiError(data.reason?.message ?? "Could not reach the API");
+        if (corpus.status === "fulfilled" && !corpus.value.loaded) setCorpusEmpty(true);
       } finally {
         setLoading(false);
       }
     })();
   }, [getToken]);
 
-  const total = scans.length;
   const completed = scans.filter((s) => s.status === "completed" || s.status === "completed_with_errors");
-  const avgScore =
-    completed.length > 0
-      ? Math.round(
-          completed.reduce((sum, s) => sum + (s.compliance_score ?? 0), 0) / completed.length
-        )
-      : null;
-  const totalElements = scans.reduce((sum, s) => sum + (s.files_scanned ?? 0), 0);
+  const avgScore = completed.length > 0
+    ? Math.round(completed.reduce((sum, s) => sum + (s.compliance_score ?? 0), 0) / completed.length)
+    : null;
+  const totalFiles = scans.reduce((sum, s) => sum + (s.files_scanned ?? 0), 0);
+  const isFirstTime = !loading && scans.length === 0 && !apiError;
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-bg-11">Dashboard</h1>
@@ -66,22 +68,61 @@ export default function DashboardPage() {
         </Link>
       </div>
 
-      <div className="grid grid-cols-3 gap-4">
-        {[
-          { label: "Total scans", value: loading ? "…" : String(total), sub: "all time" },
-          { label: "Avg score", value: loading ? "…" : avgScore !== null ? String(avgScore) : "—", sub: "compliance" },
-          { label: "Files scanned", value: loading ? "…" : String(totalElements), sub: "across all scans" },
-        ].map((s) => (
-          <Card key={s.label} variant="bordered">
-            <CardContent className="pt-6">
-              <div className="text-3xl font-bold text-bg-11 mb-1">{s.value}</div>
-              <div className="text-sm font-medium text-bg-9">{s.label}</div>
-              <div className="text-xs text-bg-7 mt-0.5">{s.sub}</div>
-            </CardContent>
-          </Card>
-        ))}
+      {/* API unreachable banner */}
+      {apiError && (
+        <div className="flex items-start gap-3 px-4 py-3 bg-danger/10 border border-danger/25 rounded-lg text-sm text-danger">
+          <AlertCircle size={16} className="mt-0.5 flex-shrink-0" />
+          <div>
+            <span className="font-medium">API unreachable</span>
+            <span className="text-danger/80 ml-1">— {apiError}. The scanner may still be waking up.</span>
+          </div>
+        </div>
+      )}
+
+      {/* Empty corpus warning */}
+      {corpusEmpty && (
+        <div className="flex items-start gap-3 px-4 py-3 bg-warning/10 border border-warning/25 rounded-lg text-sm text-warning">
+          <AlertCircle size={16} className="mt-0.5 flex-shrink-0" />
+          <span>Legal corpus not loaded — policy generation will produce draft-only output. Contact support if this persists.</span>
+        </div>
+      )}
+
+      {/* First-time onboarding hint */}
+      {isFirstTime && (
+        <div className="flex items-center gap-4 px-5 py-4 bg-mint-9/10 border border-mint-9/25 rounded-xl">
+          <Rocket size={20} className="text-mint-9 flex-shrink-0" />
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium text-bg-11">Try scanning a public repo to see ShipComply in action</p>
+            <p className="text-xs text-bg-8 mt-0.5">Detects PII flows, generates a privacy policy with file:line citations, and scores your compliance.</p>
+          </div>
+          <Link href="/scans/new">
+            <Button size="sm">Start a scan →</Button>
+          </Link>
+        </div>
+      )}
+
+      {/* Stat cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        {loading ? (
+          Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-24 rounded-xl" />)
+        ) : (
+          [
+            { label: "Total scans",   value: String(scans.length),                   sub: "all time" },
+            { label: "Avg score",     value: avgScore !== null ? `${avgScore}` : "—", sub: "compliance" },
+            { label: "Files scanned", value: String(totalFiles),                      sub: "across all scans" },
+          ].map((s) => (
+            <Card key={s.label} variant="bordered">
+              <CardContent className="pt-6">
+                <div className="text-3xl font-bold text-bg-11 tabular-nums mb-1">{s.value}</div>
+                <div className="text-sm font-medium text-bg-9">{s.label}</div>
+                <div className="text-xs text-bg-7 mt-0.5">{s.sub}</div>
+              </CardContent>
+            </Card>
+          ))
+        )}
       </div>
 
+      {/* Recent scans */}
       <Card variant="bordered">
         <CardHeader>
           <CardTitle>Recent scans</CardTitle>
@@ -89,23 +130,24 @@ export default function DashboardPage() {
         </CardHeader>
         <CardContent>
           {loading ? (
-            <div className="flex flex-col items-center justify-center py-16 gap-2 text-center">
-              <div className="text-5xl opacity-20 animate-pulse">◎</div>
-              <p className="text-bg-7 text-sm">Loading scans…</p>
+            <div className="space-y-3 py-2">
+              {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-12 rounded-lg" />)}
             </div>
           ) : scans.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 gap-4 text-center">
-              <div className="text-5xl opacity-20">◎</div>
-              <p className="text-bg-8 text-sm max-w-xs">
-                No scans yet. Connect a GitHub repository and run your first compliance scan.
-              </p>
-              <div className="flex gap-3">
-                <Link href="/repos">
-                  <Button variant="secondary" size="sm">Connect a repo</Button>
-                </Link>
-                <Link href="/scans/new">
-                  <Button size="sm">Scan a URL</Button>
-                </Link>
+              <div className="w-12 h-12 rounded-full bg-bg-3 flex items-center justify-center">
+                <Rocket size={20} className="text-bg-7" />
+              </div>
+              <div>
+                <p className="text-bg-9 text-sm font-medium">No scans yet</p>
+                <p className="text-bg-7 text-xs mt-1">Scan any public repo to generate your first compliance report.</p>
+              </div>
+              <div className="flex flex-wrap gap-2 justify-center">
+                {EXAMPLE_REPOS.map((r) => (
+                  <Link key={r.url} href={`/scans/new?repo=${encodeURIComponent(r.url)}`}>
+                    <Button variant="secondary" size="sm">{r.label}</Button>
+                  </Link>
+                ))}
               </div>
             </div>
           ) : (
@@ -124,15 +166,11 @@ export default function DashboardPage() {
                       {s.jurisdiction} · {s.started_at ? new Date(s.started_at).toLocaleDateString() : "—"}
                     </p>
                   </div>
-                  <div className="flex items-center gap-3 ml-4 flex-shrink-0">
+                  <div className="flex items-center gap-2 ml-4 flex-shrink-0">
                     {s.compliance_score !== null && (
-                      <Badge variant={scoreVariant(s.compliance_score)}>
-                        {s.compliance_score}/100
-                      </Badge>
+                      <span className="text-sm tabular-nums font-medium text-bg-9">{s.compliance_score}/100</span>
                     )}
-                    <Badge variant={s.status === "completed" ? "success" : s.status === "failed" ? "danger" : "default"}>
-                      {s.status}
-                    </Badge>
+                    <StatusBadge status={s.status} />
                   </div>
                 </Link>
               ))}

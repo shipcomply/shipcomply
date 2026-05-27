@@ -51,7 +51,10 @@ async def _get_user_org(user: CurrentUser, db: AsyncSession) -> Org:
     result = await db.execute(select(Org).where(Org.clerk_org_id == user.org_id))
     org = result.scalar_one_or_none()
     if not org:
-        raise HTTPException(status_code=404, detail="Org not found — complete onboarding first")
+        raise HTTPException(
+            status_code=409,
+            detail={"code": "PROVISIONING", "retry_after": 3, "message": "Account provisioning in progress — retry in a moment"},
+        )
     return org
 
 

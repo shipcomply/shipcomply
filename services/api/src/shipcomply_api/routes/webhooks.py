@@ -12,6 +12,11 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
+@router.get("/api/webhooks/clerk/health")
+async def clerk_webhook_health():
+    return {"secret_configured": bool(settings.clerk_webhook_secret)}
+
+
 @router.post("/api/webhooks/clerk")
 async def clerk_webhook(request: Request):
     raw_body = await request.body()

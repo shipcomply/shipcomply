@@ -1,4 +1,4 @@
-const API_URL = process.env.SHIPCOMPLY_API_URL ?? "http://localhost:8000";
+const API_URL = process.env.SHIPCOMPLY_API_URL ?? "https://shipcomply-api.onrender.com";
 const API_KEY = process.env.SHIPCOMPLY_API_KEY ?? "";
 
 export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {

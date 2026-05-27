@@ -1,4 +1,13 @@
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+export const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+
+export class ProvisioningError extends Error {
+  retryAfter: number;
+  constructor(retryAfter = 3) {
+    super("Account provisioning in progress — retry in a moment");
+    this.name = "ProvisioningError";
+    this.retryAfter = retryAfter;
+  }
+}
 
 async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${API_BASE}/api/v1${path}`, {
@@ -10,7 +19,13 @@ async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({ detail: res.statusText }));
-    throw new Error(err.detail ?? `API error ${res.status}`);
+    if (res.status === 409 && (err.detail?.code === "PROVISIONING" || err.code === "PROVISIONING")) {
+      throw new ProvisioningError(err.detail?.retry_after ?? err.retry_after ?? 3);
+    }
+    const message = typeof err.detail === "string"
+      ? err.detail
+      : err.detail?.message ?? `API error ${res.status}`;
+    throw new Error(message);
   }
   return res.json() as Promise<T>;
 }
@@ -35,5 +50,9 @@ export const api = {
       apiFetch<unknown[]>("/scans", { headers: getAuthHeaders(token) }),
     localScan: (path: string) =>
       apiFetch("/scans/local", { method: "POST", body: JSON.stringify({ path }) }),
+  },
+  corpus: {
+    status: () =>
+      apiFetch<{ count: number; jurisdictions: string[]; loaded: boolean }>("/corpus/status"),
   },
 };

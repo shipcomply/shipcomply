@@ -46,6 +46,9 @@ export async function handlePullRequest(context: Context<"pull_request.opened" |
   });
 
   try {
+    // Pre-warm the API — avoids cold-start timeout on first PR after idle
+    await fetch(`${API_URL}/healthz`).catch(() => { /* non-fatal */ });
+
     const scanRes = await fetch(`${API_URL}/api/v1/scans`, {
       method: "POST",
       headers: {

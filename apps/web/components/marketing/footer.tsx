@@ -2,8 +2,6 @@
 import Link from "next/link";
 
 const FOOTER_LINKS = [
-  { group: "Product", links: [{ label: "Pricing", href: "/pricing" }, { label: "Security", href: "/security" }, { label: "Changelog", href: "/changelog" }] },
-  { group: "Legal", links: [{ label: "Privacy Policy", href: "/privacy" }, { label: "Terms of Service", href: "/terms" }, { label: "DPA", href: "/legal/dpa" }] },
   { group: "Compliance", links: [{ label: "DPDP Act 2023", href: "/knowledge?j=DPDP" }, { label: "GDPR", href: "/knowledge?j=GDPR" }, { label: "CCPA", href: "/knowledge?j=CCPA" }] },
 ];
 
