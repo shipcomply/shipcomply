@@ -7,7 +7,7 @@ from pathlib import Path
 
 log = logging.getLogger(__name__)
 
-CHUNKS_FILE = Path(__file__).parents[5] / "corpus" / "chunks.jsonl"
+CHUNKS_FILE = Path(__file__).parents[4] / "corpus" / "chunks.jsonl"
 
 
 async def maybe_bulk_load_corpus() -> None:
