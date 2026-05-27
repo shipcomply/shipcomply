@@ -43,9 +43,22 @@ class Base(DeclarativeBase):
 
 
 async def init_db() -> None:
+    from shipcomply_api.db import models as _models  # noqa: F401 — registers ORM models with Base
+    from sqlalchemy import text
     async with engine.begin() as conn:
-        # Alembic handles migrations; this just verifies connectivity
-        await conn.run_sync(lambda _: None)
+        await conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
+        await conn.run_sync(Base.metadata.create_all)
+        await conn.execute(text("""
+            CREATE TABLE IF NOT EXISTS corpus_chunks (
+                chunk_id           TEXT PRIMARY KEY,
+                jurisdiction       TEXT NOT NULL,
+                regulation_version TEXT NOT NULL,
+                section            TEXT NOT NULL,
+                content            TEXT NOT NULL,
+                embedding          TEXT,
+                metadata           JSONB DEFAULT '{}'
+            )
+        """))
 
 
 async def get_db():
