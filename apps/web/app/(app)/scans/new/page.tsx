@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@clerk/nextjs";
 import { toast } from "sonner";
@@ -43,7 +43,7 @@ async function createWithRetry(
   throw new Error("Max retries exceeded");
 }
 
-export default function NewScanPage() {
+function NewScanForm() {
   const { getToken } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -170,5 +170,13 @@ export default function NewScanPage() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+export default function NewScanPage() {
+  return (
+    <Suspense fallback={<div className="max-w-xl"><div className="h-96 rounded-xl bg-bg-2 animate-pulse" /></div>}>
+      <NewScanForm />
+    </Suspense>
   );
 }
