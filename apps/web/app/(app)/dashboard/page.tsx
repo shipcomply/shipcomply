@@ -18,8 +18,8 @@ interface ScanRow {
   completed_at: string | null;
 }
 
-function scoreVariant(score: number | null): "success" | "warning" | "danger" | "secondary" {
-  if (score === null) return "secondary";
+function scoreVariant(score: number | null): "success" | "warning" | "danger" | "default" {
+  if (score === null) return "default";
   if (score >= 80) return "success";
   if (score >= 50) return "warning";
   return "danger";
@@ -130,7 +130,7 @@ export default function DashboardPage() {
                         {s.compliance_score}/100
                       </Badge>
                     )}
-                    <Badge variant={s.status === "completed" ? "success" : s.status === "failed" ? "danger" : "secondary"}>
+                    <Badge variant={s.status === "completed" ? "success" : s.status === "failed" ? "danger" : "default"}>
                       {s.status}
                     </Badge>
                   </div>
