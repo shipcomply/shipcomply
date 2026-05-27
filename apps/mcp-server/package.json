@@ -1,5 +1,5 @@
 {
-  "name": "@shipcomply/mcp-server",
+  "name": "shipcomply-mcp-server",
   "version": "1.0.0",
   "description": "MCP server for ShipComply — DPDP/GDPR compliance scanning inside Claude Code, Cursor, Codex, Antigravity and any MCP-compatible AI coding tool",
   "type": "module",
