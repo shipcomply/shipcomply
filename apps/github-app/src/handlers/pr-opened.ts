@@ -32,7 +32,7 @@ function scoreBar(score: number | null): string {
   return `${"█".repeat(filled)}${"░".repeat(10 - filled)} ${score}/100`;
 }
 
-export async function handlePullRequest(context: Context<"pull_request.opened">) {
+export async function handlePullRequest(context: Context<"pull_request.opened" | "pull_request.synchronize">) {
   const { payload, octokit, log } = context;
   const { repository, pull_request: pr } = payload;
 
