@@ -18,6 +18,20 @@ def legal_writer_node(state: ScanState) -> dict:
     scan_id = state["scan_id"]
     jurisdiction = state.get("jurisdiction", "DPDP")
 
+    if not state.get("data_elements"):
+        minimal_md = (
+            "# Privacy Policy\n\n"
+            "> AI-GENERATED DRAFT — REVIEW BY QUALIFIED ATTORNEY BEFORE PUBLISHING\n\n"
+            "No personally identifiable data elements were detected in this repository. "
+            "If your application collects personal data not captured by automated analysis, "
+            "please review manually.\n\n"
+            f"*Jurisdiction: {jurisdiction}*\n"
+        )
+        return {
+            "policy_markdown": minimal_md,
+            "step_log": [{"agent": "legal_writer", "status": "ok", "message": "0 PII elements — minimum policy template used"}],
+        }
+
     try:
         from shipcomply_api.legal_writer import PolicyGenerator
         from shipcomply_api.llm import llm_client

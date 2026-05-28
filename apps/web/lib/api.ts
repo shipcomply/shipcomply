@@ -18,6 +18,10 @@ async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
     },
   });
   if (!res.ok) {
+    if (res.status === 401 && typeof window !== "undefined") {
+      window.location.href = `/login?returnTo=${encodeURIComponent(window.location.pathname)}`;
+      await new Promise(() => {});
+    }
     const err = await res.json().catch(() => ({ detail: res.statusText }));
     if (res.status === 409 && (err.detail?.code === "PROVISIONING" || err.code === "PROVISIONING")) {
       throw new ProvisioningError(err.detail?.retry_after ?? err.retry_after ?? 3);

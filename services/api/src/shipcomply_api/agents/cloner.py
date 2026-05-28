@@ -3,6 +3,7 @@ from shipcomply_api.observability.langfuse import traced
 from __future__ import annotations
 
 import logging
+import os
 import subprocess
 import tempfile
 from pathlib import Path
@@ -10,6 +11,8 @@ from pathlib import Path
 from .state import ScanState
 
 log = logging.getLogger(__name__)
+
+MAX_REPO_SIZE_MB = int(os.environ.get("MAX_REPO_SIZE_MB", "500"))
 
 # Persistent temp dir registry per scan so callers can clean up
 _CLONE_DIRS: dict[str, tempfile.TemporaryDirectory] = {}  # type: ignore[type-arg]
@@ -31,7 +34,16 @@ def cloner_node(state: ScanState) -> dict:
             capture_output=True, text=True, timeout=120,
         )
         if result.returncode != 0:
-            raise RuntimeError(f"git clone failed: {result.stderr[:500]}")
+            stderr = result.stderr[:500]
+            if "permission denied" in stderr.lower() or "authentication failed" in stderr.lower() or "not found" in stderr.lower():
+                raise RuntimeError(f"PRIVATE_REPO: {stderr}")
+            raise RuntimeError(f"git clone failed: {stderr}")
+
+        size_result = subprocess.run(["du", "-sb", tmp], capture_output=True, text=True, timeout=30)
+        if size_result.returncode == 0:
+            size_mb = int(size_result.stdout.split()[0]) / (1024 * 1024)
+            if size_mb > MAX_REPO_SIZE_MB:
+                raise RuntimeError(f"Repo too large: {size_mb:.0f} MB exceeds limit of {MAX_REPO_SIZE_MB} MB")
 
         sha_result = subprocess.run(
             ["git", "-C", tmp, "rev-parse", "HEAD"],

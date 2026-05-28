@@ -10,7 +10,8 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { SeverityPill } from "@/components/ui/severity-pill";
-import { Download, AlertTriangle } from "lucide-react";
+import { Download, AlertTriangle, Github } from "lucide-react";
+import { GITHUB_APP_URL } from "@/lib/constants";
 
 interface Finding {
   severity: string;
@@ -226,17 +227,39 @@ export default function ScanPage({ params }: { params: Promise<{ id: string }> }
       {error && (
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
           className="flex flex-col items-center justify-center py-20 text-center gap-4">
-          <div className="w-12 h-12 rounded-full bg-danger/15 flex items-center justify-center">
-            <AlertTriangle size={20} className="text-danger" />
-          </div>
-          <div>
-            <p className="text-bg-9 font-medium">{error}</p>
-            <p className="text-bg-7 text-sm mt-1">Check your API connection or try again.</p>
-          </div>
-          <div className="flex gap-3">
-            <Button variant="secondary" onClick={() => window.location.reload()}>Retry</Button>
-            <a href="/scans/new"><Button>New scan</Button></a>
-          </div>
+          {error.startsWith("PRIVATE_REPO") ? (
+            <>
+              <div className="w-12 h-12 rounded-full bg-bg-3 flex items-center justify-center">
+                <Github size={20} className="text-bg-8" />
+              </div>
+              <div>
+                <p className="text-bg-9 font-medium">Private repository</p>
+                <p className="text-bg-7 text-sm mt-1 max-w-sm">
+                  Install the ShipComply GitHub App to scan private repos. It adds read-only access so the scanner can clone your code.
+                </p>
+              </div>
+              <div className="flex gap-3">
+                <a href={GITHUB_APP_URL} target="_blank" rel="noopener noreferrer">
+                  <Button>Install GitHub App →</Button>
+                </a>
+                <a href="/scans/new"><Button variant="secondary">Try a public repo</Button></a>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="w-12 h-12 rounded-full bg-danger/15 flex items-center justify-center">
+                <AlertTriangle size={20} className="text-danger" />
+              </div>
+              <div>
+                <p className="text-bg-9 font-medium">{error}</p>
+                <p className="text-bg-7 text-sm mt-1">Check your connection or try again.</p>
+              </div>
+              <div className="flex gap-3">
+                <Button variant="secondary" onClick={() => window.location.reload()}>Retry</Button>
+                <a href="/scans/new"><Button>New scan</Button></a>
+              </div>
+            </>
+          )}
         </motion.div>
       )}
 
