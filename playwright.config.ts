@@ -12,6 +12,11 @@ export default defineConfig({
   },
   projects: [
     { name: "chromium", use: { ...devices["Desktop Chrome"] } },
+    {
+      name: "e2e-live",
+      use: { ...devices["Desktop Chrome"] },
+      testMatch: "**/scan-pipeline.spec.ts",
+    },
   ],
   webServer: {
     command: "pnpm dev:web",
