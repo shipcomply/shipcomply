@@ -1,9 +1,13 @@
+"use client";
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Check } from "lucide-react";
 
-const PLANS = [
+type Currency = "INR" | "USD";
+
+const PLANS_USD = [
   {
     name: "Free",
     price: "$0",
@@ -30,7 +34,48 @@ const PLANS = [
   },
 ];
 
+const PLANS_INR = [
+  {
+    name: "Free",
+    price: "₹0",
+    period: "forever",
+    features: ["3 scans / month", "1 repository", "DPDP + GDPR + CCPA", "Community support"],
+    cta: "Current plan",
+    current: true,
+  },
+  {
+    name: "Team",
+    price: "₹2,499",
+    period: "/ month",
+    features: ["50 scans / month", "5 repositories", "All jurisdictions", "Email support", "14-day free trial"],
+    cta: "Upgrade to Team",
+    current: false,
+  },
+  {
+    name: "Enterprise",
+    price: "Custom",
+    period: "",
+    features: ["Unlimited scans", "Unlimited repos", "SSO + SAML", "On-prem option", "Dedicated support", "SOC 2 report"],
+    cta: "Contact sales",
+    current: false,
+  },
+];
+
+function detectDefaultCurrency(): Currency {
+  if (typeof navigator === "undefined") return "USD";
+  const lang = navigator.language ?? "";
+  return lang.startsWith("hi") || lang === "en-IN" ? "INR" : "USD";
+}
+
 export default function BillingPage() {
+  const [currency, setCurrency] = useState<Currency>("USD");
+
+  useEffect(() => {
+    setCurrency(detectDefaultCurrency());
+  }, []);
+
+  const plans = currency === "INR" ? PLANS_INR : PLANS_USD;
+
   return (
     <div className="max-w-4xl mx-auto space-y-8">
       <div>
@@ -38,7 +83,6 @@ export default function BillingPage() {
         <p className="text-sm text-bg-7 mt-1">Manage your subscription and usage.</p>
       </div>
 
-      {/* Current usage */}
       <Card>
         <CardHeader>
           <CardTitle>Usage this month</CardTitle>
@@ -55,20 +99,36 @@ export default function BillingPage() {
               aria-valuenow={0}
               aria-valuemin={0}
               aria-valuemax={3}
-              aria-label="Scans used"
+              aria-label="Scans used this month"
               className="h-full bg-mint-9 rounded-full"
               style={{ width: "0%" }}
             />
           </div>
-          <p className="text-xs text-bg-6">Free tier: 3 scans per month. Upgrade for more.</p>
+          <p className="text-xs text-bg-6">Free tier: 3 scans / month. Upgrade for more.</p>
         </CardContent>
       </Card>
 
-      {/* Plans */}
       <div>
-        <h2 className="text-lg font-semibold text-bg-11 mb-4">Plans</h2>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold text-bg-11">Plans</h2>
+          <div className="flex items-center gap-1 rounded-lg border border-bg-4 p-0.5 text-xs font-medium">
+            {(["INR", "USD"] as Currency[]).map((c) => (
+              <button
+                key={c}
+                onClick={() => setCurrency(c)}
+                className={`px-3 py-1 rounded-md transition-colors ${
+                  currency === c
+                    ? "bg-bg-3 text-mint-9"
+                    : "text-bg-7 hover:text-bg-10"
+                }`}
+              >
+                {c === "INR" ? "₹ INR" : "$ USD"}
+              </button>
+            ))}
+          </div>
+        </div>
         <div className="grid md:grid-cols-3 gap-4">
-          {PLANS.map((plan) => (
+          {plans.map((plan) => (
             <Card
               key={plan.name}
               variant="bordered"
@@ -104,7 +164,6 @@ export default function BillingPage() {
         </div>
       </div>
 
-      {/* Invoices */}
       <Card>
         <CardHeader>
           <CardTitle>Invoices</CardTitle>
@@ -118,7 +177,7 @@ export default function BillingPage() {
       </Card>
 
       <p className="text-xs text-bg-6">
-        Payments processed by Stripe. Taxes calculated automatically for GST (India) and VAT (EU).
+        Payments processed by Stripe. Taxes calculated automatically — GST for India, VAT for EU.
         Refunds available within 14 days. Questions? Email billing@shipcomply.dev
       </p>
     </div>

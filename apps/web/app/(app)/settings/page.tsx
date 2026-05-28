@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Copy, Check } from "lucide-react";
 
+import { Badge } from "@/components/ui/badge";
 import { GITHUB_APP_URL } from "@/lib/constants";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "https://shipcomply-api.onrender.com";
@@ -62,7 +63,10 @@ export default function SettingsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Profile</CardTitle>
+          <div className="flex items-center gap-2">
+            <CardTitle>Profile</CardTitle>
+            <Badge variant="default" className="text-xs">Personal</Badge>
+          </div>
           <CardDescription>Your personal information.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -83,7 +87,10 @@ export default function SettingsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Organization</CardTitle>
+          <div className="flex items-center gap-2">
+            <CardTitle>Organization</CardTitle>
+            <Badge variant="default" className="text-xs">Team-wide</Badge>
+          </div>
           <CardDescription>Settings shared across your team.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -101,8 +108,11 @@ export default function SettingsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>API Keys</CardTitle>
-          <CardDescription>Use these to trigger scans from CI, MCP, or the CLI.</CardDescription>
+          <div className="flex items-center gap-2">
+            <CardTitle>API Keys</CardTitle>
+            <Badge variant="default" className="text-xs">Personal</Badge>
+          </div>
+          <CardDescription>Use these to trigger scans from CI, MCP, or the CLI. Only visible to you.</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-between py-3">
@@ -117,11 +127,13 @@ export default function SettingsPage() {
         </CardContent>
       </Card>
 
-      {/* Developers */}
       <Card>
         <CardHeader>
-          <CardTitle>Developers</CardTitle>
-          <CardDescription>Integrate ShipComply with your tools.</CardDescription>
+          <div className="flex items-center gap-2">
+            <CardTitle>Developers</CardTitle>
+            <Badge variant="default" className="text-xs">Public</Badge>
+          </div>
+          <CardDescription>Integrate ShipComply with your tools. Same config for all users.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <div>
@@ -168,7 +180,10 @@ export default function SettingsPage() {
 
       <Card className="border-danger/30">
         <CardHeader>
-          <CardTitle className="text-danger">Danger zone</CardTitle>
+          <div className="flex items-center gap-2">
+            <CardTitle className="text-danger">Danger zone</CardTitle>
+            <Badge variant="danger" className="text-xs">Personal</Badge>
+          </div>
           <CardDescription>Irreversible actions — proceed with caution.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">

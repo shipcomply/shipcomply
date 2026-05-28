@@ -47,9 +47,19 @@ export default function KnowledgePage() {
   return (
     <div className="space-y-6">
       <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
-        <h1 className="text-2xl font-bold text-bg-11">Knowledge Graph</h1>
+        <h1 className="text-2xl font-bold text-bg-11">Legal Map</h1>
         <p className="text-sm text-bg-7 mt-0.5">DPDP Act 2023 — obligations, data elements, legal bases</p>
       </motion.div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Why this matters</CardTitle>
+        </CardHeader>
+        <CardContent className="text-sm text-bg-8 space-y-2 leading-relaxed">
+          <p>This is the legal corpus the scanner cross-references when generating your policy. Every citation in your audit PDF traces back to one of these section nodes.</p>
+          <p>Click any node to see the obligation, the data elements that trigger it, and the legal basis that justifies processing. After completing a scan, the graph highlights which nodes your codebase activates.</p>
+        </CardContent>
+      </Card>
 
       <div className="flex gap-3 flex-wrap">
         {Object.entries(TYPE_LABEL).map(([type, label]) => (

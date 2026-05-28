@@ -2,11 +2,12 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@clerk/nextjs";
 import Link from "next/link";
-import { AlertCircle, Rocket } from "lucide-react";
+import { Rocket } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StatusBadge } from "@/components/ui/status-badge";
+import { ApiStateBanner, useApiState } from "@/components/ui/api-state";
 import { api } from "@/lib/api";
 
 interface ScanRow {
@@ -29,10 +30,12 @@ export default function DashboardPage() {
   const { getToken } = useAuth();
   const [scans, setScans] = useState<ScanRow[]>([]);
   const [loading, setLoading] = useState(true);
-  const [apiError, setApiError] = useState("");
+  const [apiErrorMsg, setApiErrorMsg] = useState("");
   const [corpusEmpty, setCorpusEmpty] = useState(false);
+  const { state: apiState, startLoading, setOk, setError } = useApiState();
 
   useEffect(() => {
+    startLoading();
     (async () => {
       try {
         const token = await getToken();
@@ -40,13 +43,19 @@ export default function DashboardPage() {
           api.scan.list(token ?? "") as Promise<ScanRow[]>,
           api.corpus.status(),
         ]);
-        if (data.status === "fulfilled") setScans(data.value);
-        else setApiError(data.reason?.message ?? "Could not reach the API");
+        if (data.status === "fulfilled") {
+          setScans(data.value);
+          setOk();
+        } else {
+          setApiErrorMsg(data.reason?.message ?? "Couldn't reach the scanner");
+          setError();
+        }
         if (corpus.status === "fulfilled" && !corpus.value.loaded) setCorpusEmpty(true);
       } finally {
         setLoading(false);
       }
     })();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [getToken]);
 
   const completed = scans.filter((s) => s.status === "completed" || s.status === "completed_with_errors");
@@ -54,7 +63,7 @@ export default function DashboardPage() {
     ? Math.round(completed.reduce((sum, s) => sum + (s.compliance_score ?? 0), 0) / completed.length)
     : null;
   const totalFiles = scans.reduce((sum, s) => sum + (s.files_scanned ?? 0), 0);
-  const isFirstTime = !loading && scans.length === 0 && !apiError;
+  const isFirstTime = !loading && scans.length === 0 && apiState !== "error";
 
   return (
     <div className="space-y-6">
@@ -68,26 +77,22 @@ export default function DashboardPage() {
         </Link>
       </div>
 
-      {/* API unreachable banner */}
-      {apiError && (
-        <div className="flex items-start gap-3 px-4 py-3 bg-danger/10 border border-danger/25 rounded-lg text-sm text-danger">
-          <AlertCircle size={16} className="mt-0.5 flex-shrink-0" />
-          <div>
-            <span className="font-medium">API unreachable</span>
-            <span className="text-danger/80 ml-1">— {apiError}. The scanner may still be waking up.</span>
-          </div>
-        </div>
-      )}
+      <ApiStateBanner
+        state={apiState}
+        errorMessage={apiErrorMsg || undefined}
+        onRetry={() => window.location.reload()}
+      />
 
-      {/* Empty corpus warning */}
       {corpusEmpty && (
-        <div className="flex items-start gap-3 px-4 py-3 bg-warning/10 border border-warning/25 rounded-lg text-sm text-warning">
-          <AlertCircle size={16} className="mt-0.5 flex-shrink-0" />
+        <div
+          role="status"
+          aria-live="polite"
+          className="flex items-start gap-3 px-4 py-3 bg-warning/10 border border-warning/25 rounded-lg text-sm text-warning"
+        >
           <span>Legal corpus not loaded — policy generation will produce draft-only output. Contact support if this persists.</span>
         </div>
       )}
 
-      {/* First-time onboarding hint */}
       {isFirstTime && (
         <div className="flex items-center gap-4 px-5 py-4 bg-mint-9/10 border border-mint-9/25 rounded-xl">
           <Rocket size={20} className="text-mint-9 flex-shrink-0" />
@@ -101,7 +106,6 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* Stat cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {loading ? (
           Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-24 rounded-xl" />)
@@ -122,7 +126,6 @@ export default function DashboardPage() {
         )}
       </div>
 
-      {/* Recent scans */}
       <Card variant="bordered">
         <CardHeader>
           <CardTitle>Recent scans</CardTitle>
@@ -159,7 +162,10 @@ export default function DashboardPage() {
                   className="flex items-center justify-between py-3 px-1 hover:bg-bg-2 rounded-lg transition-colors"
                 >
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium text-bg-11 truncate">
+                    <p
+                      className="text-sm font-medium text-bg-11 truncate"
+                      title={s.repo_url}
+                    >
                       {s.repo_url.replace(/^https?:\/\/(github\.com\/)?/, "")}
                     </p>
                     <p className="text-xs text-bg-7 mt-0.5">

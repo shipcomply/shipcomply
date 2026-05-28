@@ -1,6 +1,9 @@
 import Link from "next/link";
 import { Nav } from "@/components/marketing/nav";
 import { Footer } from "@/components/marketing/footer";
+import { WhatItDoesSection } from "@/components/marketing/what-it-does-section";
+import { McpSection } from "@/components/marketing/mcp-section";
+import { GitHubAppSection } from "@/components/marketing/github-app-section";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Shield, MapPin, Zap, Network, ShieldCheck, FileText } from "lucide-react";
@@ -71,6 +74,8 @@ export default function LandingPage() {
         </div>
       </section>
 
+      <WhatItDoesSection />
+
       <section className="py-20 px-6 border-t border-bg-4">
         <div className="max-w-5xl mx-auto">
           <h2 className="text-3xl font-bold text-bg-11 mb-3 text-center">How it works</h2>
@@ -110,6 +115,10 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
+
+      <McpSection />
+
+      <GitHubAppSection />
 
       <section className="py-20 px-6 border-t border-bg-4">
         <div className="max-w-5xl mx-auto text-center">
