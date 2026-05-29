@@ -1,6 +1,7 @@
-from shipcomply_api.observability.langfuse import traced
 """Audit agent — scoring + markdown report from state data_elements."""
 from __future__ import annotations
+
+from shipcomply_api.observability.langfuse import traced
 
 import logging
 

@@ -1,6 +1,7 @@
-from shipcomply_api.observability.langfuse import traced
 """Scanner agent — wraps shipcomply_api.scanner.scan_repo."""
 from __future__ import annotations
+
+from shipcomply_api.observability.langfuse import traced
 
 import logging
 

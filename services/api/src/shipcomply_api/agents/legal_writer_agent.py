@@ -1,6 +1,7 @@
-from shipcomply_api.observability.langfuse import traced
 """LegalWriter agent — generates privacy policy using PolicyGenerator."""
 from __future__ import annotations
+
+from shipcomply_api.observability.langfuse import traced
 
 import logging
 

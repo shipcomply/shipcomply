@@ -1,6 +1,7 @@
-from shipcomply_api.observability.langfuse import traced
 """Cloner agent — validates repo_url, git-clones to /tmp, records commit SHA."""
 from __future__ import annotations
+
+from shipcomply_api.observability.langfuse import traced
 
 import logging
 import os

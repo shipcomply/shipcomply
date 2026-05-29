@@ -301,6 +301,12 @@ def _regex_scan(content: str, filepath: str, result: ScanResult) -> None:
 
 # ─── Public API ──────────────────────────────────────────────────────────────
 
+def _detection_count(result: ScanResult) -> int:
+    """Total source + sink hits across all elements — used to tell whether a scan
+    pass actually detected anything in a file."""
+    return sum(len(el.sources) + len(el.sinks) for el in result.data_elements)
+
+
 def scan_repo(repo_path: str) -> ScanResult:
     """Scan a directory for PII data elements. repo_path must be an existing directory."""
     path = Path(repo_path).resolve()
@@ -343,8 +349,13 @@ def scan_repo(repo_path: str) -> ScanResult:
             if "\x00" in content[:512]:
                 result.excluded_files += 1
                 continue
+            before = _detection_count(result)
             used_ast = _try_treesitter_scan(content, rel, result)
-            if not used_ast:
+            # AST detectors only cover JSX inputs, analytics calls and server-action
+            # params, and the TS grammar misses .tsx JSX + bare field identifiers.
+            # Fall back to the comprehensive regex scan whenever the AST pass found
+            # nothing in this file, so detection never silently regresses to zero.
+            if not used_ast or _detection_count(result) == before:
                 _regex_scan(content, rel, result)
             result.files_scanned += 1
         except Exception as e:
