@@ -142,7 +142,7 @@ export default function DashboardPage() {
             </ol>
 
             <div className="mt-7 flex flex-col sm:flex-row sm:items-center gap-3">
-              <Link href="/scans/new"><Button size="lg" className="gap-2 shadow-glow-sm">Start a scan <ArrowRight size={15} /></Button></Link>
+              <Link href="/scans/new" className="shrink-0"><Button size="lg" className="gap-2 shadow-glow-sm whitespace-nowrap">Start a scan <ArrowRight size={15} /></Button></Link>
               <div className="flex flex-wrap gap-1.5">
                 {EXAMPLE_REPOS.map((r) => (
                   <Link key={r.url} href={`/scans/new?repo=${encodeURIComponent(r.url)}`}>
