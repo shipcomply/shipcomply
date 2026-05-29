@@ -103,7 +103,7 @@ export default function ScanPage({ params }: { params: Promise<{ id: string }> }
         toast.success("Audit report downloaded");
       }
     } catch {
-      toast.error("Download failed — please try again");
+      toast.error("Download failed. Please try again.");
     } finally {
       setDownloading(null);
     }
@@ -163,7 +163,7 @@ export default function ScanPage({ params }: { params: Promise<{ id: string }> }
           pump().catch(() => { if (!cancelled) fallbackPoll(token ?? ""); });
           return;
         }
-      } catch { /* SSE unavailable — fall through */ }
+      } catch { /* SSE unavailable, fall through */ }
 
       fallbackPoll(token ?? "");
     }
@@ -196,7 +196,7 @@ export default function ScanPage({ params }: { params: Promise<{ id: string }> }
       readerRef.current?.cancel().catch(() => {});
       readerRef.current = null;
     };
-  // getToken is stable per Clerk guarantees — id is the only meaningful dep
+  // getToken is stable per Clerk guarantees; id is the only meaningful dep
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
@@ -284,7 +284,7 @@ export default function ScanPage({ params }: { params: Promise<{ id: string }> }
             <motion.div key="corpus-warn" initial={{ opacity: 0 }} animate={{ opacity: 1 }}
               className="flex items-start gap-3 px-4 py-3 bg-warning/10 border border-warning/25 rounded-lg text-sm text-warning">
               <AlertTriangle size={15} className="mt-0.5 flex-shrink-0" />
-              <span>Legal corpus not loaded — policy may be generic. Findings and score are unaffected.</span>
+              <span>Legal corpus not loaded. Policy may be generic. Findings and score are unaffected.</span>
             </motion.div>
           )}
 

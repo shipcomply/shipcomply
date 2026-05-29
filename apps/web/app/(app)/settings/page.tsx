@@ -77,7 +77,7 @@ export default function SettingsPage() {
           <div>
             <label className="block text-sm font-medium text-bg-9 mb-1.5">Email</label>
             <Input placeholder="you@example.com" disabled className="opacity-60 cursor-not-allowed" />
-            <p className="text-xs text-bg-6 mt-1">Managed by Clerk — change in account settings.</p>
+            <p className="text-xs text-bg-6 mt-1">Managed by Clerk. Change in account settings.</p>
           </div>
           <Button onClick={() => { setSaved(true); toast.success("Saved"); }} variant={saved ? "secondary" : "primary"}>
             {saved ? "Saved" : "Save changes"}
@@ -184,7 +184,7 @@ export default function SettingsPage() {
             <CardTitle className="text-danger">Danger zone</CardTitle>
             <Badge variant="danger" className="text-xs">Personal</Badge>
           </div>
-          <CardDescription>Irreversible actions — proceed with caution.</CardDescription>
+          <CardDescription>Irreversible actions. Proceed with caution.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="flex items-center justify-between">

@@ -60,7 +60,7 @@ export default function ScansPage() {
           <AlertCircle size={16} className="mt-0.5 flex-shrink-0" />
           <div>
             <span className="font-medium">API unreachable</span>
-            <span className="text-danger/80 ml-1">— {apiError}. The scanner may still be waking up.</span>
+            <span className="text-danger/80 ml-1">({apiError}). The scanner may still be waking up.</span>
           </div>
         </div>
       )}
@@ -117,11 +117,11 @@ export default function ScansPage() {
                     </div>
                     <div className="flex items-center gap-6 ml-4 flex-shrink-0">
                       <span className="text-sm tabular-nums text-bg-9 w-16 text-right">
-                        {s.compliance_score !== null ? `${s.compliance_score}/100` : "—"}
+                        {s.compliance_score !== null ? `${s.compliance_score}/100` : "-"}
                       </span>
                       <StatusBadge status={s.status} />
                       <span className="text-xs text-bg-7 w-24 text-right">
-                        {s.started_at ? new Date(s.started_at).toLocaleDateString() : "—"}
+                        {s.started_at ? new Date(s.started_at).toLocaleDateString() : "-"}
                       </span>
                     </div>
                   </Link>

@@ -24,7 +24,7 @@ const MCP_CONFIG = `{
 
 export function McpSection() {
   return (
-    <section className="py-20 px-6 border-t border-bg-4">
+    <section id="mcp" className="py-20 px-6 border-t border-bg-4">
       <div className="max-w-5xl mx-auto">
         <div className="flex items-center gap-3 mb-3">
           <h2 className="text-3xl font-bold text-bg-11">Works from Claude, Cursor, Codex</h2>

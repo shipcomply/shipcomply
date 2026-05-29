@@ -2,9 +2,9 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@clerk/nextjs";
 import Link from "next/link";
-import { Rocket } from "lucide-react";
+import { Rocket, ScanLine, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { ApiStateBanner, useApiState } from "@/components/ui/api-state";
@@ -25,6 +25,11 @@ const EXAMPLE_REPOS = [
   { label: "supabase/supabase", url: "https://github.com/supabase/supabase" },
   { label: "calcom/cal.com",    url: "https://github.com/calcom/cal.com" },
 ];
+
+function ScoreRing({ score }: { score: number }) {
+  const color = score >= 80 ? "text-success" : score >= 50 ? "text-warning" : "text-danger";
+  return <span className={`text-sm font-semibold tabular-nums ${color}`}>{score}</span>;
+}
 
 export default function DashboardPage() {
   const { getToken } = useAuth();
@@ -62,128 +67,127 @@ export default function DashboardPage() {
   const avgScore = completed.length > 0
     ? Math.round(completed.reduce((sum, s) => sum + (s.compliance_score ?? 0), 0) / completed.length)
     : null;
-  const totalFiles = scans.reduce((sum, s) => sum + (s.files_scanned ?? 0), 0);
   const isFirstTime = !loading && scans.length === 0 && apiState !== "error";
 
   return (
     <div className="space-y-6">
+
+      {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-bg-11">Dashboard</h1>
-          <p className="text-bg-8 text-sm mt-0.5">Overview of your compliance scans</p>
-        </div>
+        <h1 className="text-2xl font-bold text-bg-11">Dashboard</h1>
         <Link href="/scans/new">
-          <Button>New scan</Button>
+          <Button size="sm" className="gap-1.5">
+            <Plus size={14} />
+            New scan
+          </Button>
         </Link>
       </div>
 
+      {/* API state banner */}
       <ApiStateBanner
         state={apiState}
         errorMessage={apiErrorMsg || undefined}
         onRetry={() => window.location.reload()}
       />
 
+      {/* Corpus warning */}
       {corpusEmpty && (
         <div
           role="status"
           aria-live="polite"
           className="flex items-start gap-3 px-4 py-3 bg-warning/10 border border-warning/25 rounded-lg text-sm text-warning"
         >
-          <span>Legal corpus not loaded — policy generation will produce draft-only output. Contact support if this persists.</span>
+          Legal corpus not loaded. Policy generation will produce draft-only output. Contact support if this persists.
         </div>
       )}
 
-      {isFirstTime && (
-        <div className="flex items-center gap-4 px-5 py-4 bg-mint-9/10 border border-mint-9/25 rounded-xl">
-          <Rocket size={20} className="text-mint-9 flex-shrink-0" />
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-bg-11">Try scanning a public repo to see ShipComply in action</p>
-            <p className="text-xs text-bg-8 mt-0.5">Detects PII flows, generates a privacy policy with file:line citations, and scores your compliance.</p>
+      {/* First-time empty state */}
+      {isFirstTime ? (
+        <div className="py-16 flex flex-col items-center justify-center gap-6 text-center">
+          <div className="w-16 h-16 rounded-2xl bg-mint-9/10 border border-mint-9/20 flex items-center justify-center">
+            <ScanLine size={28} className="text-mint-9" />
+          </div>
+          <div>
+            <h2 className="text-lg font-semibold text-bg-11 mb-2">Run your first compliance scan</h2>
+            <p className="text-bg-8 text-sm max-w-sm mx-auto leading-relaxed">
+              Paste any public GitHub URL. We detect PII flows, generate a privacy policy with file:line citations, and score your compliance.
+            </p>
           </div>
           <Link href="/scans/new">
-            <Button size="sm">Start a scan →</Button>
+            <Button size="lg" className="shadow-glow-sm">Start a scan</Button>
           </Link>
-        </div>
-      )}
-
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        {loading ? (
-          Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-24 rounded-xl" />)
-        ) : (
-          [
-            { label: "Total scans",   value: String(scans.length),                   sub: "all time" },
-            { label: "Avg score",     value: avgScore !== null ? `${avgScore}` : "—", sub: "compliance" },
-            { label: "Files scanned", value: String(totalFiles),                      sub: "across all scans" },
-          ].map((s) => (
-            <Card key={s.label} variant="bordered">
-              <CardContent className="pt-6">
-                <div className="text-3xl font-bold text-bg-11 tabular-nums mb-1">{s.value}</div>
-                <div className="text-sm font-medium text-bg-9">{s.label}</div>
-                <div className="text-xs text-bg-7 mt-0.5">{s.sub}</div>
-              </CardContent>
-            </Card>
-          ))
-        )}
-      </div>
-
-      <Card variant="bordered">
-        <CardHeader>
-          <CardTitle>Recent scans</CardTitle>
-          <CardDescription>Your latest compliance scans</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <div className="space-y-3 py-2">
-              {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-12 rounded-lg" />)}
-            </div>
-          ) : scans.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 gap-4 text-center">
-              <div className="w-12 h-12 rounded-full bg-bg-3 flex items-center justify-center">
-                <Rocket size={20} className="text-bg-7" />
-              </div>
-              <div>
-                <p className="text-bg-9 text-sm font-medium">No scans yet</p>
-                <p className="text-bg-7 text-xs mt-1">Scan any public repo to generate your first compliance report.</p>
-              </div>
-              <div className="flex flex-wrap gap-2 justify-center">
-                {EXAMPLE_REPOS.map((r) => (
-                  <Link key={r.url} href={`/scans/new?repo=${encodeURIComponent(r.url)}`}>
-                    <Button variant="secondary" size="sm">{r.label}</Button>
-                  </Link>
-                ))}
-              </div>
-            </div>
-          ) : (
-            <div className="divide-y divide-bg-4">
-              {scans.map((s) => (
-                <Link
-                  key={s.scan_id}
-                  href={`/scans/${s.scan_id}`}
-                  className="flex items-center justify-between py-3 px-1 hover:bg-bg-2 rounded-lg transition-colors"
-                >
-                  <div className="min-w-0 flex-1">
-                    <p
-                      className="text-sm font-medium text-bg-11 truncate"
-                      title={s.repo_url}
-                    >
-                      {s.repo_url.replace(/^https?:\/\/(github\.com\/)?/, "")}
-                    </p>
-                    <p className="text-xs text-bg-7 mt-0.5">
-                      {s.jurisdiction} · {s.started_at ? new Date(s.started_at).toLocaleDateString() : "—"}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2 ml-4 flex-shrink-0">
-                    {s.compliance_score !== null && (
-                      <span className="text-sm tabular-nums font-medium text-bg-9">{s.compliance_score}/100</span>
-                    )}
-                    <StatusBadge status={s.status} />
-                  </div>
+          <div>
+            <p className="text-xs text-bg-7 mb-3">Or try a demo repo</p>
+            <div className="flex flex-wrap gap-2 justify-center">
+              {EXAMPLE_REPOS.map((r) => (
+                <Link key={r.url} href={`/scans/new?repo=${encodeURIComponent(r.url)}`}>
+                  <button className="text-xs px-3 py-1.5 rounded-full bg-bg-3 border border-bg-5 text-bg-9 hover:bg-bg-4 hover:text-bg-11 transition-colors font-mono">
+                    {r.label}
+                  </button>
                 </Link>
               ))}
             </div>
-          )}
-        </CardContent>
-      </Card>
+          </div>
+        </div>
+      ) : (
+        <Card variant="bordered">
+          <CardHeader className="pb-0">
+            <div className="flex items-center justify-between">
+              <CardTitle>Recent scans</CardTitle>
+              {/* Compact inline stats - no hero-metric card grid */}
+              {!loading && scans.length > 0 && (
+                <div className="flex items-center gap-4 text-xs text-bg-7">
+                  <span><span className="font-semibold text-bg-9 tabular-nums">{scans.length}</span> total</span>
+                  {avgScore !== null && (
+                    <span>avg score <span className="font-semibold text-bg-9 tabular-nums">{avgScore}/100</span></span>
+                  )}
+                </div>
+              )}
+            </div>
+          </CardHeader>
+          <CardContent className="pt-4">
+            {loading ? (
+              <div className="space-y-3 py-2">
+                {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-12 rounded-lg" />)}
+              </div>
+            ) : scans.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12 gap-3 text-center">
+                <Rocket size={20} className="text-bg-6" />
+                <p className="text-bg-8 text-sm">No scans yet</p>
+                <Link href="/scans/new">
+                  <Button variant="secondary" size="sm">Start a scan</Button>
+                </Link>
+              </div>
+            ) : (
+              <div className="divide-y divide-bg-4">
+                {scans.map((s) => (
+                  <Link
+                    key={s.scan_id}
+                    href={`/scans/${s.scan_id}`}
+                    className="flex items-center justify-between py-3 px-1 hover:bg-bg-2 rounded-lg transition-colors group"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <p
+                        className="text-sm font-medium text-bg-11 truncate group-hover:text-mint-9 transition-colors"
+                        title={s.repo_url}
+                      >
+                        {s.repo_url.replace(/^https?:\/\/(github\.com\/)?/, "")}
+                      </p>
+                      <p className="text-xs text-bg-7 mt-0.5 font-mono">
+                        {s.jurisdiction} · {s.started_at ? new Date(s.started_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "-"}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-3 ml-4 flex-shrink-0">
+                      {s.compliance_score !== null && <ScoreRing score={s.compliance_score} />}
+                      <StatusBadge status={s.status} />
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

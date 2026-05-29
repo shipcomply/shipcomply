@@ -1,12 +1,13 @@
 "use client";
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@clerk/nextjs";
 import { toast } from "sonner";
+import { Loader2, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { api, ProvisioningError } from "@/lib/api";
+import { api, ProvisioningError, API_BASE } from "@/lib/api";
 
 const PRESETS = [
   { label: "vercel/next.js",    url: "https://github.com/vercel/next.js" },
@@ -15,12 +16,55 @@ const PRESETS = [
 ];
 
 const JURISDICTIONS = [
-  { value: "DPDP", label: "DPDP Act 2023",   desc: "India — applies to any org processing Indian users' data" },
-  { value: "GDPR", label: "GDPR",            desc: "EU/EEA — extraterritorial; applies if serving EU residents" },
-  { value: "CCPA", label: "CCPA / CPRA",     desc: "California — applies to businesses meeting revenue/data thresholds" },
+  { value: "DPDP", label: "DPDP Act 2023",   desc: "India: applies to any org processing Indian users' data" },
+  { value: "GDPR", label: "GDPR",            desc: "EU/EEA: extraterritorial; applies if serving EU residents" },
+  { value: "CCPA", label: "CCPA / CPRA",     desc: "California: applies to businesses meeting revenue/data thresholds" },
 ];
 
 const REPO_RE = /^https:\/\/(github\.com|gitlab\.com|bitbucket\.org)\/[\w.\-]+\/[\w.\-]+(\.git)?$/;
+
+type WarmState = "checking" | "ready" | "warming" | "error";
+
+function useApiWarm() {
+  const [warmState, setWarmState] = useState<WarmState>("checking");
+  const attempts = useRef(0);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function ping() {
+      try {
+        const res = await fetch(`${API_BASE}/healthz`, { signal: AbortSignal.timeout(8000) });
+        if (!cancelled && res.ok) {
+          setWarmState("ready");
+          return true;
+        }
+      } catch {
+        // still cold
+      }
+      if (!cancelled) {
+        attempts.current += 1;
+        if (attempts.current >= 2) setWarmState("warming");
+      }
+      return false;
+    }
+
+    ping();
+    const interval = setInterval(async () => {
+      if (attempts.current > 12) {
+        clearInterval(interval);
+        if (!cancelled) setWarmState("error");
+        return;
+      }
+      const ok = await ping();
+      if (ok) clearInterval(interval);
+    }, 5000);
+
+    return () => { cancelled = true; clearInterval(interval); };
+  }, []);
+
+  return warmState;
+}
 
 async function createWithRetry(
   body: unknown,
@@ -34,13 +78,34 @@ async function createWithRetry(
       if (err instanceof ProvisioningError && attempt < maxRetries) {
         toast.loading(`Setting up your account… (${attempt + 1}/${maxRetries})`, { id: "provisioning" });
         await new Promise((r) => setTimeout(r, (err.retryAfter ?? 3) * 1000));
+      } else if (err instanceof TypeError && err.message.includes("fetch") && attempt < maxRetries) {
+        toast.loading(`Scanner is starting up, retrying (${attempt + 1}/${maxRetries})...`, { id: "warmup-retry" });
+        await new Promise((r) => setTimeout(r, 8000));
       } else {
         toast.dismiss("provisioning");
+        toast.dismiss("warmup-retry");
         throw err;
       }
     }
   }
   throw new Error("Max retries exceeded");
+}
+
+function WarmingBanner({ state }: { state: WarmState }) {
+  if (state === "ready" || state === "checking") return null;
+  if (state === "error") {
+    return (
+      <div className="flex items-center gap-2.5 rounded-lg border border-danger/30 bg-danger/8 px-4 py-3 text-sm text-danger mb-4">
+        <span>Couldn&apos;t reach the scanner. Check your connection or try again later.</span>
+      </div>
+    );
+  }
+  return (
+    <div className="flex items-center gap-2.5 rounded-lg border border-warning/30 bg-warning/8 px-4 py-3 text-sm text-warning mb-4">
+      <Zap size={14} className="shrink-0 animate-pulse" />
+      <span>Spinning up scanner (free tier cold start, ~50s). You can still submit; it will retry automatically.</span>
+    </div>
+  );
 }
 
 function NewScanForm() {
@@ -51,6 +116,7 @@ function NewScanForm() {
   const [jurisdiction, setJurisdiction] = useState("DPDP");
   const [urlError, setUrlError] = useState("");
   const [loading, setLoading] = useState(false);
+  const warmState = useApiWarm();
 
   useEffect(() => {
     const preset = searchParams.get("repo");
@@ -74,7 +140,8 @@ function NewScanForm() {
       const token = await getToken();
       const res = await createWithRetry({ repo_url: repoUrl.trim(), jurisdiction }, token ?? "");
       toast.dismiss("provisioning");
-      toast.success("Scan queued — analyzing your repository");
+      toast.dismiss("warmup-retry");
+      toast.success("Scan queued: analyzing your repository");
       router.push(`/scans/${res.scan_id}`);
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : "Scan failed";
@@ -87,13 +154,15 @@ function NewScanForm() {
   return (
     <div className="max-w-xl">
       <h1 className="text-2xl font-bold text-bg-11 mb-6">New scan</h1>
+
+      <WarmingBanner state={warmState} />
+
       <Card variant="bordered">
         <CardHeader>
           <CardTitle>Scan a repository</CardTitle>
           <CardDescription>Paste a public GitHub, GitLab, or Bitbucket URL</CardDescription>
         </CardHeader>
         <CardContent className="space-y-5">
-          {/* Quick presets */}
           <div>
             <p className="text-xs text-bg-7 mb-2 font-medium uppercase tracking-wide">Try an example</p>
             <div className="flex flex-wrap gap-2">
@@ -110,7 +179,6 @@ function NewScanForm() {
             </div>
           </div>
 
-          {/* URL input */}
           <div>
             <label htmlFor="repo-url" className="text-sm font-medium text-bg-9 mb-1.5 block">
               Repository URL
@@ -125,7 +193,6 @@ function NewScanForm() {
             />
           </div>
 
-          {/* Jurisdiction */}
           <div>
             <p className="text-sm font-medium text-bg-9 mb-2">Jurisdiction</p>
             <div className="space-y-2" role="radiogroup" aria-label="Jurisdiction">
@@ -157,11 +224,20 @@ function NewScanForm() {
 
           <Button
             onClick={handleScan}
-            isLoading={loading}
-            disabled={loading}
+            disabled={loading || warmState === "error"}
             className="w-full"
           >
-            {loading ? "Starting scan…" : "Start scan"}
+            {loading ? (
+              <span className="flex items-center gap-2">
+                <Loader2 size={14} className="animate-spin" />
+                {warmState === "warming" ? "Starting scanner…" : "Starting scan…"}
+              </span>
+            ) : warmState === "checking" ? (
+              <span className="flex items-center gap-2">
+                <Loader2 size={14} className="animate-spin opacity-60" />
+                Checking scanner…
+              </span>
+            ) : "Start scan"}
           </Button>
         </CardContent>
       </Card>

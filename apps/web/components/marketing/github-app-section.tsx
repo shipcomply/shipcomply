@@ -18,7 +18,7 @@ const SEVERITY_COLOR: Record<string, string> = {
 
 export function GitHubAppSection() {
   return (
-    <section className="py-20 px-6 border-t border-bg-4">
+    <section id="github-app" className="py-20 px-6 border-t border-bg-4">
       <div className="max-w-5xl mx-auto">
         <div className="flex items-center gap-3 mb-3">
           <h2 className="text-3xl font-bold text-bg-11">Compliance checks on every PR</h2>
@@ -61,7 +61,7 @@ export function GitHubAppSection() {
             </div>
             <div className="px-4 py-3 border-t border-bg-4 flex items-center gap-2 text-xs text-bg-7">
               <Check size={12} className="text-success" />
-              <span>Merge blocked — resolve HIGH finding first</span>
+              <span>Merge blocked: resolve HIGH finding first</span>
             </div>
           </div>
         </div>

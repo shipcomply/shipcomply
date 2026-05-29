@@ -48,7 +48,7 @@ export default function KnowledgePage() {
     <div className="space-y-6">
       <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
         <h1 className="text-2xl font-bold text-bg-11">Legal Map</h1>
-        <p className="text-sm text-bg-7 mt-0.5">DPDP Act 2023 — obligations, data elements, legal bases</p>
+        <p className="text-sm text-bg-7 mt-0.5">DPDP Act 2023: obligations, data elements, legal bases</p>
       </motion.div>
 
       <Card>
@@ -79,7 +79,7 @@ export default function KnowledgePage() {
           viewBox={`0 0 ${svgW} ${svgH}`}
           className="block"
           role="application"
-          aria-label="DPDP Act 2023 knowledge graph — clickable nodes for regulation sections, data elements, and legal bases"
+          aria-label="DPDP Act 2023 knowledge graph: clickable nodes for regulation sections, data elements, and legal bases"
         >
           <title>DPDP Act 2023 Knowledge Graph</title>
           <defs>

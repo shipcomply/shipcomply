@@ -17,7 +17,7 @@ const DIFFERENTIATORS = [
 
 export function WhatItDoesSection() {
   return (
-    <section className="py-20 px-6 border-t border-bg-4">
+    <section id="what-it-does" className="py-20 px-6 border-t border-bg-4">
       <div className="max-w-5xl mx-auto">
         <div className="grid md:grid-cols-2 gap-12 items-center">
           <div>

@@ -25,7 +25,7 @@ export function ApiWarmup() {
     <div className="flex items-center gap-3 px-4 py-2.5 bg-bg-3 border-b border-bg-5 text-sm text-bg-9">
       <Loader2 size={14} className="animate-spin text-mint-9 flex-shrink-0" />
       <span>
-        Waking up the scanner — first request after idle takes ~50s.
+        Waking up the scanner: first request after idle takes ~50s.
         <span className="text-bg-7 ml-1">Free tier spin-up.</span>
       </span>
       <button

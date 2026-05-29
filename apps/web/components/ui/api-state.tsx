@@ -28,7 +28,7 @@ export function ApiStateBanner({
       >
         <Zap size={15} className="shrink-0 animate-pulse" />
         <span>
-          Spinning up scanner — free tier cold start (~{warmupSeconds}s). Hang tight.
+          Spinning up scanner (free tier cold start, ~{warmupSeconds}s). Hang tight.
         </span>
       </div>
     );
@@ -61,6 +61,7 @@ export function useApiState(warmingDelay = 8000) {
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   function startLoading() {
+    if (timer.current) clearTimeout(timer.current);
     setState("loading");
     timer.current = setTimeout(() => {
       setState((prev) => (prev === "loading" ? "warming" : prev));

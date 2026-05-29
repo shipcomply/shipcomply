@@ -171,13 +171,13 @@ export default function BillingPage() {
         </CardHeader>
         <CardContent>
           <div className="text-center py-8 text-bg-6 text-sm">
-            No invoices yet — you are on the free plan.
+            No invoices yet. You are on the free plan.
           </div>
         </CardContent>
       </Card>
 
       <p className="text-xs text-bg-6">
-        Payments processed by Stripe. Taxes calculated automatically — GST for India, VAT for EU.
+        Payments processed by Stripe. Taxes calculated automatically: GST for India, VAT for EU.
         Refunds available within 14 days. Questions? Email billing@shipcomply.dev
       </p>
     </div>
