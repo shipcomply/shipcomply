@@ -170,9 +170,9 @@ export default function SettingsPage() {
 
           <div>
             <p className="text-sm font-medium text-bg-9 mb-1">Documentation</p>
-            <a href="https://docs.shipcomply.dev" target="_blank" rel="noopener noreferrer"
+            <a href="/docs"
               className="text-sm text-mint-9 hover:text-mint-11 transition-colors">
-              docs.shipcomply.dev →
+              shipcomply.vercel.app/docs →
             </a>
           </div>
         </CardContent>

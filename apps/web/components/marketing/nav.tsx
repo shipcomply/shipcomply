@@ -39,14 +39,12 @@ export function Nav() {
             </a>
           ))}
           <span className="w-px h-4 bg-bg-4 mx-2" aria-hidden />
-          <a
-            href="https://docs.shipcomply.dev"
+          <Link
+            href="/docs"
             className="px-3 py-1.5 rounded-md text-bg-8 hover:text-bg-11 hover:bg-bg-3/60 transition-colors"
-            target="_blank"
-            rel="noopener"
           >
             Docs
-          </a>
+          </Link>
         </nav>
 
         {/* Auth CTAs */}
@@ -83,15 +81,13 @@ export function Nav() {
               {l.label}
             </a>
           ))}
-          <a
-            href="https://docs.shipcomply.dev"
+          <Link
+            href="/docs"
             onClick={() => setOpen(false)}
             className="flex items-center h-10 px-3 rounded-lg text-sm text-bg-8 hover:text-bg-11 hover:bg-bg-3 transition-colors"
-            target="_blank"
-            rel="noopener"
           >
             Docs
-          </a>
+          </Link>
           <div className="pt-3 flex flex-col gap-2">
             <Link href="/login" onClick={() => setOpen(false)}>
               <Button variant="secondary" size="sm" className="w-full">Sign in</Button>
