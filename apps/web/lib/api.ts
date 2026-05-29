@@ -1,4 +1,12 @@
-export const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+// Prefer an explicit NEXT_PUBLIC_API_URL. Otherwise: in a non-localhost browser
+// (production), fall back to the deployed Render API rather than localhost, so the
+// app works even when the Vercel env var is missing. Local dev still uses :8000.
+const PROD_API_URL = "https://shipcomply-api.onrender.com";
+export const API_BASE =
+  process.env.NEXT_PUBLIC_API_URL ??
+  (typeof window !== "undefined" && !/^(localhost|127\.0\.0\.1)$/.test(window.location.hostname)
+    ? PROD_API_URL
+    : "http://localhost:8000");
 
 export class ProvisioningError extends Error {
   retryAfter: number;

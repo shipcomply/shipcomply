@@ -42,6 +42,25 @@ function scoreTone(score: number) {
   return score >= 80 ? "text-success" : score >= 50 ? "text-warning" : "text-danger";
 }
 
+// Render's free tier sleeps after inactivity; the first request cold-starts (~50s)
+// and can reject with a network error ("Failed to fetch"). Retry a few times before
+// surfacing a hard error so the dashboard recovers automatically once the API wakes.
+async function listScansWithRetry(token: string, tries = 4, gapMs = 8000): Promise<ScanRow[]> {
+  for (let attempt = 0; attempt < tries; attempt++) {
+    try {
+      return (await api.scan.list(token)) as ScanRow[];
+    } catch (err) {
+      const networkError = err instanceof TypeError;
+      if (networkError && attempt < tries - 1) {
+        await new Promise((r) => setTimeout(r, gapMs));
+        continue;
+      }
+      throw err;
+    }
+  }
+  throw new Error("unreachable");
+}
+
 export default function DashboardPage() {
   const { getToken } = useAuth();
   const [scans, setScans] = useState<ScanRow[]>([]);
@@ -51,26 +70,28 @@ export default function DashboardPage() {
   const { state: apiState, startLoading, setOk, setError } = useApiState();
 
   useEffect(() => {
+    let cancelled = false;
     startLoading();
     (async () => {
+      const token = await getToken();
+      // Corpus status is non-critical: fire and forget.
+      api.corpus.status()
+        .then((c) => { if (!cancelled && !c.loaded) setCorpusEmpty(true); })
+        .catch(() => {});
       try {
-        const token = await getToken();
-        const [data, corpus] = await Promise.allSettled([
-          api.scan.list(token ?? "") as Promise<ScanRow[]>,
-          api.corpus.status(),
-        ]);
-        if (data.status === "fulfilled") {
-          setScans(data.value);
-          setOk();
-        } else {
-          setApiErrorMsg(data.reason?.message ?? "Couldn't reach the scanner");
-          setError();
-        }
-        if (corpus.status === "fulfilled" && !corpus.value.loaded) setCorpusEmpty(true);
+        const data = await listScansWithRetry(token ?? "");
+        if (cancelled) return;
+        setScans(data);
+        setOk();
+      } catch (err) {
+        if (cancelled) return;
+        setApiErrorMsg(err instanceof Error ? err.message : "Couldn't reach the scanner");
+        setError();
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     })();
+    return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [getToken]);
 
