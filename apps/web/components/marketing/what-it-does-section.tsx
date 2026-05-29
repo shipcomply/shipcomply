@@ -21,7 +21,7 @@ export function WhatItDoesSection() {
       <div className="max-w-5xl mx-auto">
         <div className="grid md:grid-cols-2 gap-12 items-center">
           <div>
-            <h2 className="text-3xl font-bold text-bg-11 mb-4">What ShipComply actually does</h2>
+            <h2 className="font-display text-3xl font-bold text-bg-11 mb-4 tracking-tight">What ShipComply actually does</h2>
             <p className="text-bg-8 leading-relaxed mb-4">
               Most compliance tools ask you to fill out a form describing what your app does.
               ShipComply reads your source code and figures it out, then generates the legal

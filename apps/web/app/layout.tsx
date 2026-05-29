@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
-import { Inter, JetBrains_Mono } from "next/font/google";
+import { Inter, JetBrains_Mono, Space_Grotesk } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
 const mono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-mono", display: "swap" });
+const display = Space_Grotesk({ subsets: ["latin"], variable: "--font-display", display: "swap", weight: ["500", "600", "700"] });
 
 export const metadata: Metadata = {
   title: { default: "ShipComply: Code to Compliance in 5 Minutes", template: "%s | ShipComply" },
@@ -24,7 +25,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${inter.variable} ${mono.variable} scroll-smooth`}>
+    <html lang="en" className={`${inter.variable} ${mono.variable} ${display.variable} scroll-smooth`}>
       <body className="bg-bg-0 text-bg-11 antialiased">
         <ClerkProvider>{children}</ClerkProvider>
       </body>

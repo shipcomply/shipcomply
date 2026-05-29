@@ -47,7 +47,7 @@ export default function KnowledgePage() {
   return (
     <div className="space-y-6">
       <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
-        <h1 className="text-2xl font-bold text-bg-11">Legal Map</h1>
+        <h1 className="font-display text-2xl font-bold text-bg-11 tracking-tight">Legal Map</h1>
         <p className="text-sm text-bg-7 mt-0.5">DPDP Act 2023: obligations, data elements, legal bases</p>
       </motion.div>
 

@@ -209,7 +209,7 @@ export default function ScanPage({ params }: { params: Promise<{ id: string }> }
       {/* Sticky header */}
       <div className="sticky top-0 z-10 -mx-4 md:-mx-8 px-4 md:px-8 py-3 bg-bg-0/90 backdrop-blur-sm border-b border-bg-4 flex items-center justify-between">
         <div className="min-w-0">
-          <h1 className="text-lg font-bold text-bg-11">Compliance audit</h1>
+          <h1 className="font-display text-lg font-bold text-bg-11 tracking-tight">Compliance audit</h1>
           <p className="text-xs text-bg-7 font-mono truncate">{id}</p>
         </div>
         <div className="flex items-center gap-3 flex-shrink-0">

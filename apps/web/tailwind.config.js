@@ -38,6 +38,7 @@ const config: Config = {
       },
       fontFamily: {
         sans: ["var(--font-inter)", "system-ui", "sans-serif"],
+        display: ["var(--font-display)", "var(--font-inter)", "system-ui", "sans-serif"],
         mono: ["var(--font-mono)", "JetBrains Mono", "Fira Code", "monospace"],
       },
       borderRadius: {
@@ -56,6 +57,7 @@ const config: Config = {
       transitionTimingFunction: {
         "out-cubic": "cubic-bezier(0.33, 1, 0.68, 1)",
         "out-quint": "cubic-bezier(0.22, 1, 0.36, 1)",
+        "out-expo": "cubic-bezier(0.16, 1, 0.3, 1)",
       },
       transitionDuration: {
         fast: "150ms",
@@ -66,11 +68,15 @@ const config: Config = {
         "fade-in": "fadeIn 250ms cubic-bezier(0.33, 1, 0.68, 1) forwards",
         "slide-up": "slideUp 400ms cubic-bezier(0.22, 1, 0.36, 1) forwards",
         "count-up": "countUp 800ms cubic-bezier(0.22, 1, 0.36, 1) forwards",
+        shimmer: "shimmer 2.4s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+        "float-slow": "floatSlow 6s ease-in-out infinite",
       },
       keyframes: {
         fadeIn: { from: { opacity: "0" }, to: { opacity: "1" } },
         slideUp: { from: { opacity: "0", transform: "translateY(16px)" }, to: { opacity: "1", transform: "translateY(0)" } },
         countUp: { from: { transform: "scale(0.8)", opacity: "0" }, to: { transform: "scale(1)", opacity: "1" } },
+        shimmer: { "0%": { backgroundPosition: "-200% 0" }, "100%": { backgroundPosition: "200% 0" } },
+        floatSlow: { "0%, 100%": { transform: "translateY(0)" }, "50%": { transform: "translateY(-6px)" } },
       },
     },
   },

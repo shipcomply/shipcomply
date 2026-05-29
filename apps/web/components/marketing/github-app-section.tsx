@@ -21,7 +21,7 @@ export function GitHubAppSection() {
     <section id="github-app" className="py-20 px-6 border-t border-bg-4">
       <div className="max-w-5xl mx-auto">
         <div className="flex items-center gap-3 mb-3">
-          <h2 className="text-3xl font-bold text-bg-11">Compliance checks on every PR</h2>
+          <h2 className="font-display text-3xl font-bold text-bg-11 tracking-tight">Compliance checks on every PR</h2>
           <Badge variant="default">GitHub App</Badge>
         </div>
         <p className="text-bg-8 mb-10 max-w-xl">

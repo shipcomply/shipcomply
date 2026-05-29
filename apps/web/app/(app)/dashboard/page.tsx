@@ -74,7 +74,7 @@ export default function DashboardPage() {
 
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-bg-11">Dashboard</h1>
+        <h1 className="font-display text-2xl font-bold text-bg-11 tracking-tight">Dashboard</h1>
         <Link href="/scans/new">
           <Button size="sm" className="gap-1.5">
             <Plus size={14} />

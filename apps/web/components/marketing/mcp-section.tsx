@@ -27,7 +27,7 @@ export function McpSection() {
     <section id="mcp" className="py-20 px-6 border-t border-bg-4">
       <div className="max-w-5xl mx-auto">
         <div className="flex items-center gap-3 mb-3">
-          <h2 className="text-3xl font-bold text-bg-11">Works from Claude, Cursor, Codex</h2>
+          <h2 className="font-display text-3xl font-bold text-bg-11 tracking-tight">Works from Claude, Cursor, Codex</h2>
           <Badge variant="mint">MCP</Badge>
         </div>
         <p className="text-bg-8 mb-10 max-w-xl">

@@ -27,7 +27,8 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       disabled={disabled || isLoading}
       className={cn(
         "inline-flex items-center justify-center font-medium transition-all duration-fast ease-out-cubic",
-        "disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-mint-9",
+        "active:scale-[0.97] disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-mint-9",
         variantClasses[variant],
         sizeClasses[size],
         className

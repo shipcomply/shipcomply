@@ -8,7 +8,7 @@ export default function ReposPage() {
     <div className="space-y-8">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-bg-11">Repositories</h1>
+          <h1 className="font-display text-2xl font-bold text-bg-11 tracking-tight">Repositories</h1>
           <p className="text-bg-8 text-sm mt-0.5">Connect repos to enable continuous compliance scanning</p>
         </div>
         <a href={GITHUB_APP_URL} target="_blank" rel="noopener noreferrer">

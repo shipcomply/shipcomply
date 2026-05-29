@@ -79,7 +79,7 @@ export default function BillingPage() {
   return (
     <div className="max-w-4xl mx-auto space-y-8">
       <div>
-        <h1 className="text-2xl font-bold text-bg-11">Billing</h1>
+        <h1 className="font-display text-2xl font-bold text-bg-11 tracking-tight">Billing</h1>
         <p className="text-sm text-bg-7 mt-1">Manage your subscription and usage.</p>
       </div>
 

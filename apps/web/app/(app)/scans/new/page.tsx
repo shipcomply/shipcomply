@@ -153,7 +153,7 @@ function NewScanForm() {
 
   return (
     <div className="max-w-xl">
-      <h1 className="text-2xl font-bold text-bg-11 mb-6">New scan</h1>
+      <h1 className="font-display text-2xl font-bold text-bg-11 mb-6 tracking-tight">New scan</h1>
 
       <WarmingBanner state={warmState} />
 

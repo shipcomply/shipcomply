@@ -49,7 +49,7 @@ export default function ScansPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-bg-11">Scans</h1>
+          <h1 className="font-display text-2xl font-bold text-bg-11 tracking-tight">Scans</h1>
           <p className="text-sm text-bg-7 mt-1">History of all compliance scans.</p>
         </div>
         <Link href="/scans/new"><Button>New scan</Button></Link>

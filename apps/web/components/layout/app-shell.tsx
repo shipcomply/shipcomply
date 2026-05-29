@@ -54,7 +54,7 @@ function Sidebar() {
   return (
     <aside className="fixed left-0 top-0 bottom-0 w-56 bg-bg-1 border-r border-bg-4 flex flex-col z-40">
       <div className="h-16 flex items-center px-5 border-b border-bg-4">
-        <Link href="/dashboard" className="text-mint-9 font-bold text-base tracking-tight">ShipComply</Link>
+        <Link href="/dashboard" className="text-mint-9 font-display font-bold text-base tracking-tight">ShipComply</Link>
       </div>
       <nav className="flex-1 p-3 space-y-0.5 overflow-y-auto">
         <NavItems />
@@ -85,7 +85,7 @@ function MobileDrawer({ open, onClose }: { open: boolean; onClose: () => void })
       <div className="fixed inset-0 bg-black/50 z-40 md:hidden" onClick={onClose} />
       <aside className="fixed left-0 top-0 bottom-0 w-64 bg-bg-1 border-r border-bg-4 flex flex-col z-50 md:hidden">
         <div className="h-16 flex items-center justify-between px-5 border-b border-bg-4">
-          <Link href="/dashboard" onClick={onClose} className="text-mint-9 font-bold text-base tracking-tight">ShipComply</Link>
+          <Link href="/dashboard" onClick={onClose} className="text-mint-9 font-display font-bold text-base tracking-tight">ShipComply</Link>
           <button onClick={onClose} className="text-bg-7 hover:text-bg-11 transition-colors" aria-label="Close menu">
             <X size={18} />
           </button>
@@ -129,7 +129,7 @@ export function AppShell({ children, warmupBanner }: AppShellProps) {
           >
             <Menu size={20} />
           </button>
-          <Link href="/dashboard" className="text-mint-9 font-bold text-sm tracking-tight">ShipComply</Link>
+          <Link href="/dashboard" className="text-mint-9 font-display font-bold text-sm tracking-tight">ShipComply</Link>
         </div>
 
         {warmupBanner}
